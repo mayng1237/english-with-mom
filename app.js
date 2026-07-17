@@ -408,39 +408,111 @@ function speechMatchScore(target,said){
 function recognize(target,callback,onStatus=()=>{}){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!SR){callback(false,"","unsupported",0);return}
- const r=new SR();r.lang="en-US";r.continuous=false;r.interimResults=true;r.maxAlternatives=1;
- let finished=false,bestTranscript="",bestScore=0,silenceTimer=null;
- const hardTimer=setTimeout(()=>finish("timeout"),5000);
+
+ // V10: Give Grandma enough time to speak slowly.
+ // Safari may end one recognition session after a short pause, so the app
+ // quietly starts another session and only scores after a longer silence.
+ const SILENCE_GRACE_MS=3000;
+ const MAX_LISTENING_MS=15000;
+ const RESTART_DELAY_MS=120;
+
+ let recognition=null;
+ let finished=false;
+ let startedOnce=false;
+ let bestTranscript="";
+ let bestScore=0;
+ let heardAnything=false;
+ let lastSpeechAt=Date.now();
+ let silenceTimer=null;
+ let restartTimer=null;
+
+ const hardTimer=setTimeout(()=>finish("timeout"),MAX_LISTENING_MS);
+
+ function clearTimers(){
+   clearTimeout(hardTimer);
+   clearTimeout(silenceTimer);
+   clearTimeout(restartTimer);
+ }
+
  function finish(reason="complete"){
-   if(finished)return;finished=true;clearTimeout(hardTimer);clearTimeout(silenceTimer);
-   try{r.stop()}catch(_){}
+   if(finished)return;
+   finished=true;
+   clearTimers();
+   try{recognition?.stop()}catch(_){}
    callback(bestScore>=.62,bestTranscript,reason,bestScore);
  }
- function schedule(delay){clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>finish("silence"),delay)}
- r.onstart=()=>onStatus("listening");
- r.onspeechstart=()=>onStatus("hearing");
- r.onresult=e=>{
-   let finalText="",interimText="";
-   for(let i=e.resultIndex;i<e.results.length;i++){
-     const t=e.results[i][0].transcript;
-     if(e.results[i].isFinal)finalText+=t+" ";else interimText+=t+" ";
+
+ function scheduleSilenceCheck(){
+   clearTimeout(silenceTimer);
+   if(!heardAnything)return;
+   const remaining=Math.max(0,SILENCE_GRACE_MS-(Date.now()-lastSpeechAt));
+   silenceTimer=setTimeout(()=>{
+     if(Date.now()-lastSpeechAt>=SILENCE_GRACE_MS)finish("silence");
+     else scheduleSilenceCheck();
+   },remaining);
+ }
+
+ function startSession(){
+   if(finished)return;
+   recognition=new SR();
+   recognition.lang="en-US";
+   recognition.continuous=false;
+   recognition.interimResults=true;
+   recognition.maxAlternatives=1;
+
+   recognition.onstart=()=>{
+     onStatus(startedOnce?"listening-again":"listening");
+     startedOnce=true;
+   };
+   recognition.onspeechstart=()=>{
+     lastSpeechAt=Date.now();
+     onStatus("hearing");
+   };
+   recognition.onresult=e=>{
+     let finalText="",interimText="";
+     for(let i=e.resultIndex;i<e.results.length;i++){
+       const t=e.results[i][0].transcript;
+       if(e.results[i].isFinal)finalText+=t+" ";else interimText+=t+" ";
+     }
+     const candidate=(finalText||interimText).trim();
+     if(!candidate)return;
+
+     heardAnything=true;
+     lastSpeechAt=Date.now();
+     const score=speechMatchScore(target,candidate);
+     if(score>=bestScore){bestScore=score;bestTranscript=candidate}
+     onStatus("processing",candidate,score);
+     scheduleSilenceCheck();
+   };
+   recognition.onspeechend=()=>{
+     lastSpeechAt=Date.now();
+     scheduleSilenceCheck();
+   };
+   recognition.onnomatch=()=>{};
+   recognition.onerror=e=>{
+     if(finished||e.error==="aborted")return;
+     if(["not-allowed","service-not-allowed","audio-capture"].includes(e.error)){
+       finish(e.error);
+     }
+   };
+   recognition.onend=()=>{
+     if(finished)return;
+     if(heardAnything&&Date.now()-lastSpeechAt>=SILENCE_GRACE_MS){
+       finish("silence");
+       return;
+     }
+     restartTimer=setTimeout(startSession,RESTART_DELAY_MS);
+   };
+
+   try{recognition.start()}
+   catch(e){
+     restartTimer=setTimeout(startSession,RESTART_DELAY_MS+180);
    }
-   const candidate=(finalText||interimText).trim();
-   if(!candidate)return;
-   const score=speechMatchScore(target,candidate);
-   if(score>=bestScore){bestScore=score;bestTranscript=candidate}
-   onStatus("processing",candidate,score);
-   if(score>=.88)finish("matched");
-   else if(finalText)finish("final");
-   else if(score>=.60)schedule(250);
-   else schedule(600);
- };
- r.onspeechend=()=>schedule(160);
- r.onnomatch=()=>finish("nomatch");
- r.onerror=e=>{if(!(e.error==="aborted"&&finished))finish(e.error||"error")};
- r.onend=()=>{if(!finished)finish("ended")};
- try{r.start()}catch(e){clearTimeout(hardTimer);callback(false,"","start-error",0)}
+ }
+
+ startSession();
 }
+
 function startRecognition(){
  const target=dailyLessons()[idx].en;
  $("#speakBtn").disabled=true;
