@@ -1,24 +1,11 @@
-# 🌷 English with Grandma
+# 🌷 English with Grandma V4 — 1,000 Sentences
 
 **Học tiếng Anh cùng Ngoại, mỗi ngày một chút.**
 
-A mobile-first English learning web app made with love for Grandma.
+- 1.000 câu tiếng Anh thực tế
+- 100 ngày học
+- 10 câu mỗi ngày
+- 20 chặng học
+- Lưu ngày đang học, hoa, chuỗi ngày và nhật ký trên iPhone
 
-## V3 updates
-
-- 10 daily sentences
-- MinMin and MoMo sticker reactions
-- 30 bilingual praise and encouragement messages
-- Grandma wording throughout the app
-- Flower-based progress
-- Grandma's Purple Garden
-- Daily learning journal
-- Travel and emergency English
-- PWA support for iPhone
-
-## Update GitHub Pages
-
-Upload and overwrite all files in the repository, including the complete `assets` folder.  
-After committing, wait briefly and refresh the GitHub Pages link.
-
-On iPhone, Safari may keep an old cached version. Close the installed app and reopen it. If needed, remove it from the Home Screen and add it again.
+Upload và ghi đè toàn bộ file trong repository GitHub, bao gồm `data/curriculum-1000.json` và toàn bộ thư mục `assets`.

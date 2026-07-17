@@ -1,7 +1,7 @@
 {
   "name": "English with Grandma",
   "short_name": "English Grandma",
-  "description": "Học tiếng Anh cùng Ngoại, mỗi ngày một chút.",
+  "description": "1.000 câu tiếng Anh thực tế cho hành trình của Ngoại.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

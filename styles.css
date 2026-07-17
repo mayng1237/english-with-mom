@@ -47,3 +47,5 @@ h1{font-size:29px;line-height:1.1;margin:0;letter-spacing:-.8px}h1 span{color:va
 .modal{position:fixed;inset:0;background:rgba(46,30,56,.52);display:grid;place-items:center;padding:18px;z-index:20}.sticker-card{width:min(100%,390px);background:white;border-radius:30px;padding:20px;text-align:center;box-shadow:var(--shadow)}
 .sticker-card img{width:230px;height:230px;object-fit:contain}.sticker-card h2{color:var(--p);font-size:26px;margin:12px 0 4px}.sticker-card p{font-size:18px;margin:0 0 15px}.sticker-card button{border:0;background:var(--p);color:white;border-radius:18px;padding:14px 20px;font-weight:800}
 @media(max-width:360px){h1{font-size:24px}.welcome-card{grid-template-columns:72px 1fr 72px}.avatar{width:76px;height:76px}.menu button{min-height:128px}.lesson-card h2{font-size:32px}}
+
+.journey-badges{display:flex;gap:8px;flex-wrap:wrap;margin:14px 2px 0}.journey-badges span{background:white;color:var(--p);font-weight:800;border-radius:999px;padding:8px 11px;box-shadow:var(--shadow);font-size:12px}
