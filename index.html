@@ -82,6 +82,7 @@
           <button class="favorite-btn" id="favoriteBtn" aria-label="Lưu câu yêu thích">☆</button>
         </div>
         <h2 id="lessonEn" class="karaoke-sentence" aria-live="polite">Hello!</h2>
+        <div id="lessonPronunciation" class="lesson-pronunciation" aria-label="Cách phát âm">/həˈloʊ/</div>
         <div id="chunkPreview" class="chunk-preview hidden"></div>
         <p class="meaning" id="lessonVi">Xin chào!</p>
 
@@ -129,6 +130,10 @@
         </div>
       </div>
 
+      <div id="reviewNotice" class="review-notice hidden">
+        <span>📖 Đang ôn lại <b id="reviewSentenceLabel">Câu 1</b></span>
+        <button id="returnToCurrentBtn">↩ Quay về câu đang học</button>
+      </div>
       <div class="lesson-flowers" id="lessonFlowers"></div>
       <button class="next-btn" id="nextBtn">Câu tiếp theo →</button>
     </section>

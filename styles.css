@@ -209,3 +209,73 @@ button:disabled{opacity:.62;cursor:wait;transform:none!important}
 .secondary-action{background:#fff;border:1px solid #d9c7e9;color:var(--p)}
 .primary-action{background:var(--p);border:none;color:#fff}
 @media(max-width:390px){.listen-result-actions{grid-template-columns:1fr}}
+
+
+/* ---------- V9 Pronunciation + Flower Review ---------- */
+.lesson-pronunciation{
+ margin:-8px 0 12px;
+ color:#8b72a3;
+ font-size:19px;
+ font-weight:700;
+ letter-spacing:.2px;
+ line-height:1.4;
+}
+.review-notice{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px;
+ margin:8px 0 12px;
+ padding:10px 12px;
+ border-radius:16px;
+ background:#f4ebfb;
+ border:1px solid #dfccef;
+ color:#704497;
+ font-size:13px;
+ font-weight:800;
+}
+.review-notice button{
+ border:0;
+ background:#fff;
+ color:var(--p);
+ border-radius:12px;
+ padding:8px 10px;
+ font-weight:900;
+}
+.lesson-flowers{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:3px;
+ flex-wrap:nowrap;
+}
+.flower-step{
+ appearance:none;
+ border:0;
+ background:transparent;
+ padding:2px;
+ font-size:28px;
+ line-height:1;
+ cursor:pointer;
+ border-radius:50%;
+ transition:transform .18s,filter .18s,opacity .18s;
+}
+.flower-step:disabled{
+ cursor:default;
+ opacity:.52;
+}
+.flower-step.learned:active{transform:scale(1.14)}
+.flower-step.active{
+ animation:flowerGlow 1.05s ease-in-out infinite alternate;
+ filter:drop-shadow(0 0 6px rgba(145,78,201,.55));
+}
+@keyframes flowerGlow{
+ from{transform:translateY(0) scale(1)}
+ to{transform:translateY(-4px) scale(1.13)}
+}
+@media(max-width:390px){
+ .lesson-pronunciation{font-size:17px}
+ .review-notice{align-items:flex-start;flex-direction:column}
+ .review-notice button{width:100%}
+ .flower-step{font-size:25px;padding:1px}
+}

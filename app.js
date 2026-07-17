@@ -281,13 +281,101 @@ function renderHome(){
    $("#dailyMessage").textContent="Mỗi câu Ngoại học là một bước gần MinMin và MoMo hơn. 💜";
  }
 }
+
+// ---------- V9: pronunciation line + clickable flower review ----------
+let reviewMode=false;
+let savedLearningIndex=null;
+
+const pronunciationDictionary={
+ "hello":"/həˈloʊ/",
+ "hi":"/haɪ/",
+ "good morning":"/ɡʊd ˈmɔːrnɪŋ/",
+ "good afternoon":"/ɡʊd ˌæftərˈnuːn/",
+ "good evening":"/ɡʊd ˈiːvnɪŋ/",
+ "good night":"/ɡʊd naɪt/",
+ "goodbye":"/ˌɡʊdˈbaɪ/",
+ "see you":"/siː juː/",
+ "see you later":"/siː juː ˈleɪtər/",
+ "see you tomorrow":"/siː juː təˈmɑːroʊ/",
+ "how are you":"/haʊ ɑːr juː/",
+ "i am fine":"/aɪ æm faɪn/",
+ "thank you":"/θæŋk juː/",
+ "you are welcome":"/jʊr ˈwelkəm/",
+ "please":"/pliːz/",
+ "excuse me":"/ɪkˈskjuːz miː/",
+ "sorry":"/ˈsɑːri/",
+ "yes":"/jes/",
+ "no":"/noʊ/"
+};
+
+const wordPronunciation={
+ "a":"ə","about":"əˈbaʊt","afternoon":"ˌæftərˈnuːn","again":"əˈɡen",
+ "am":"æm","and":"ænd","are":"ɑːr","at":"æt","beautiful":"ˈbjuːtəfəl",
+ "can":"kæn","coffee":"ˈkɔːfi","day":"deɪ","do":"duː","drink":"drɪŋk",
+ "evening":"ˈiːvnɪŋ","fine":"faɪn","food":"fuːd","for":"fɔːr","friend":"frend",
+ "good":"ɡʊd","grandma":"ˈɡrænˌmɑː","happy":"ˈhæpi","have":"hæv",
+ "hello":"həˈloʊ","help":"help","home":"hoʊm","how":"haʊ","i":"aɪ",
+ "is":"ɪz","it":"ɪt","later":"ˈleɪtər","like":"laɪk","love":"lʌv",
+ "me":"miː","meet":"miːt","morning":"ˈmɔːrnɪŋ","my":"maɪ","name":"neɪm",
+ "need":"niːd","nice":"naɪs","night":"naɪt","no":"noʊ","please":"pliːz",
+ "see":"siː","sorry":"ˈsɑːri","thank":"θæŋk","the":"ðə","this":"ðɪs",
+ "to":"tə","today":"təˈdeɪ","tomorrow":"təˈmɑːroʊ","very":"ˈveri",
+ "want":"wɑːnt","water":"ˈwɔːtər","welcome":"ˈwelkəm","what":"wʌt",
+ "where":"wer","you":"juː","your":"jʊr","yes":"jes"
+};
+
+function cleanPhrase(text){
+ return String(text||"").toLowerCase().replace(/[^\w\s']/g,"").replace(/\s+/g," ").trim();
+}
+function getPronunciation(text){
+ const phrase=cleanPhrase(text);
+ if(pronunciationDictionary[phrase])return pronunciationDictionary[phrase];
+ return `/${phrase.split(" ").filter(Boolean).map(word=>wordPronunciation[word]||word).join(" ")}/`;
+}
+function renderPronunciation(text){
+ $("#lessonPronunciation").textContent=getPronunciation(text);
+}
+function enterFlowerReview(targetIndex){
+ if(!reviewMode)savedLearningIndex=state.sentence;
+ reviewMode=true;
+ idx=targetIndex;
+ $("#reviewNotice").classList.remove("hidden");
+ $("#reviewSentenceLabel").textContent=`Câu ${targetIndex+1}`;
+ renderLesson();
+}
+function returnToCurrentLearning(){
+ idx=savedLearningIndex??state.sentence;
+ reviewMode=false;
+ savedLearningIndex=null;
+ $("#reviewNotice").classList.add("hidden");
+ renderLesson();
+}
+function renderClickableFlowers(){
+ const currentLearning=reviewMode?(savedLearningIndex??state.sentence):state.sentence;
+ $("#lessonFlowers").innerHTML=Array.from({length:10},(_,i)=>{
+   const learned=i<currentLearning;
+   const current=i===idx;
+   const available=learned||i===currentLearning;
+   const icon=learned?"🌷":"🌱";
+   return `<button class="flower-step ${learned?"learned":"seed"} ${current?"active":""}"
+     data-flower-index="${i}" aria-label="${learned?`Ôn lại câu ${i+1}`:`Câu ${i+1}`}"
+     ${available?"":"disabled"}>${icon}</button>`;
+ }).join("");
+ $$(".flower-step").forEach(button=>{
+   button.onclick=()=>{
+     const target=Number(button.dataset.flowerIndex);
+     if(target<=currentLearning)enterFlowerReview(target);
+   };
+ });
+}
+
 function renderLesson(){
  const lessons=dailyLessons(),l=lessons[idx];if(!l)return;
  $("#lessonCounter").textContent=`Bài ${activeDay} • Câu ${idx+1} / 10`;
- $("#lessonTopic").textContent=l.topic;renderSentenceWords(l.en);$("#lessonVi").textContent=l.vi;resetPronunciationPanel();$("#chunkPreview").classList.add("hidden");
+ $("#lessonTopic").textContent=l.topic;renderSentenceWords(l.en);renderPronunciation(l.en);$("#lessonVi").textContent=l.vi;resetPronunciationPanel();$("#chunkPreview").classList.add("hidden");
  $("#feedback").className="feedback hidden";$("#speakStatus").textContent="Bấm vào rồi nói theo";
- $("#lessonFlowers").innerHTML=flowerRow(idx,10);
- $("#nextBtn").textContent=idx===9?"Hoàn thành bài học 🌷":"Câu tiếp theo →";
+ renderClickableFlowers();
+ $("#nextBtn").textContent=reviewMode?"↩ Quay về câu đang học":(idx===9?"Hoàn thành bài học 🌷":"Câu tiếp theo →");
  $("#lessonMascot").src=`assets/stickers/${idx%2?pick(happyMomo):pick(happyMinmin)}`;
  const fav=state.favorites.includes(l.id);$("#favoriteBtn").textContent=fav?"★":"☆";$("#favoriteBtn").classList.toggle("active",fav);
  $("#recordedAudio").classList.add("hidden");$("#recordStatus").textContent="Nghe lại giọng của mình";
@@ -537,7 +625,7 @@ async function init(){
 $$("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("#gardenShortcut").onclick=()=>go("garden");
 $("#startToday").onclick=()=>{activeDay=state.day;idx=state.sentence;renderLesson();go("lesson")};
-$("#slowBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,.58);$("#naturalBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,.88);$("#fastBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,1.02);$("#chunkBtn").onclick=()=>speakChunks(dailyLessons()[idx].en);$("#speakBtn").onclick=startRecognition;$("#recordBtn").onclick=toggleRecord;$("#favoriteBtn").onclick=toggleFavorite;$("#nextBtn").onclick=nextLesson;
+$("#slowBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,.58);$("#naturalBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,.88);$("#fastBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,1.02);$("#chunkBtn").onclick=()=>speakChunks(dailyLessons()[idx].en);$("#speakBtn").onclick=startRecognition;$("#recordBtn").onclick=toggleRecord;$("#favoriteBtn").onclick=toggleFavorite;$("#nextBtn").onclick=()=>reviewMode?returnToCurrentLearning():nextLesson();$("#returnToCurrentBtn").onclick=returnToCurrentLearning;
 $("#quizPlay").onclick=playQuizSentence;$("#quizReplay").onclick=playQuizSentence;$("#quizNext").onclick=nextQuizQuestion;
 $("#conversationListen").onclick=()=>speakAs("Grandma",conversations[conversationIdx].reply,{rate:.78,pitch:1.04});$("#conversationSpeak").onclick=conversationSpeak;$("#conversationNext").onclick=()=>{conversationIdx=(conversationIdx+1)%conversations.length;renderConversation()};
 $("#celebrationClose").onclick=()=>$("#celebration").classList.add("hidden");

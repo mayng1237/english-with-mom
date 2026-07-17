@@ -1,7 +1,7 @@
 {
   "name": "English with Grandma",
   "short_name": "Grandma English",
-  "description": "English with Grandma V8.2: luyện nghe nhiều lần, giữ kết quả và chỉ chuyển câu khi Ngoại tự bấm.",
+  "description": "English with Grandma V9: phát âm dưới câu tiếng Anh; progress hoa giữ ở cuối và bấm được để ôn.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
