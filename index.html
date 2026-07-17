@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#8b5bb8">
+  <meta name="theme-color" content="#8250b5">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="English with Mom">
-  <title>English with Mom</title>
+  <meta name="apple-mobile-web-app-title" content="English with Grandma">
+  <title>English with Grandma</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="stylesheet" href="styles.css">
@@ -16,8 +16,8 @@
 <div class="app">
   <header>
     <div>
-      <div class="brand">🌷 English with Mom</div>
-      <h1>Học tiếng Anh cùng mẹ,<br><span>mỗi ngày một chút.</span></h1>
+      <div class="brand">🌷 English with Grandma</div>
+      <h1>Học tiếng Anh cùng Ngoại,<br><span>mỗi ngày một chút.</span></h1>
     </div>
     <button class="flower-pill" id="gardenShortcut">🪻 <span id="flowerCount">0</span></button>
   </header>
@@ -25,30 +25,35 @@
   <main>
     <section class="screen active" id="home">
       <div class="welcome-card">
-        <img src="assets/stickers/minmin-1.png" class="avatar rabbit" alt="MinMin">
+        <img src="assets/stickers/minmin-v2/minmin-v2-02.png" class="avatar" alt="MinMin sticker">
         <div class="welcome-copy">
-          <b>Good morning, Grandma!</b>
-          <p>MinMin 🐰 và MoMo 🐷 học cùng bà ngoại nhé!</p>
+          <b id="welcomeEnglish">Good morning, Grandma!</b>
+          <p id="welcomeVietnamese">MinMin 🐰 và MoMo 🐷 học cùng Bà Ngoại nhé!</p>
         </div>
-        <img src="assets/stickers/momo-8.png" class="avatar pig" alt="MoMo">
+        <img src="assets/stickers/momo/momo-02.png" class="avatar" alt="MoMo sticker">
       </div>
 
       <button class="hero-btn" id="startToday">
         <span class="play">▶</span>
-        <span><b>Học bài hôm nay</b><small>5 câu • khoảng 7 phút</small></span>
+        <span><b>Học bài hôm nay</b><small>10 câu • khoảng 10 phút</small></span>
       </button>
 
       <div class="progress-card">
-        <div><small>Hôm nay</small><b id="todayProgress">0 / 5 câu</b></div>
-        <div class="bar"><span id="progressBar"></span></div>
-        <div class="streak">🔥 <b id="streakCount">0</b> ngày</div>
+        <div><small>Hôm nay</small><b id="todayProgress">0 / 10 câu</b></div>
+        <div class="flower-progress" id="flowerProgress"></div>
+        <div class="streak">🔥 <b id="streakCount">0</b><small>ngày</small></div>
+      </div>
+
+      <div class="daily-note" id="dailyNote">
+        <span>💌</span>
+        <div><b>Lời nhắn hôm nay</b><p id="dailyMessage">Mỗi câu Ngoại học là một bước gần MinMin và MoMo hơn. 💜</p></div>
       </div>
 
       <div class="menu">
-        <button data-go="topics"><span>✈️</span><b>Đi Mỹ cùng mẹ</b><small>Sân bay, nhập cảnh, gia đình</small></button>
+        <button data-go="topics"><span>✈️</span><b>Đi Mỹ cùng Ngoại</b><small>Sân bay, nhập cảnh, gia đình</small></button>
         <button data-go="listen"><span>👂</span><b>Nghe và chọn</b><small>Không cần gõ chữ</small></button>
-        <button data-go="help"><span>🆘</span><b>Mẹ cần giúp</b><small>Phát câu khẩn cấp</small></button>
-        <button data-go="garden"><span>🌷</span><b>Vườn của bà</b><small>Học xong sẽ nở hoa</small></button>
+        <button data-go="help"><span>🆘</span><b>Ngoại cần giúp</b><small>Phát câu khẩn cấp</small></button>
+        <button data-go="garden"><span>🌷</span><b>Vườn của Ngoại</b><small>Học xong sẽ nở hoa</small></button>
       </div>
 
       <button class="install-card" id="installHelp">
@@ -60,34 +65,46 @@
     <section class="screen" id="lesson">
       <div class="section-head">
         <button data-go="home">←</button>
-        <div><small>Bài học hôm nay</small><b id="lessonCounter">Câu 1 / 5</b></div>
-        <span>🐰🌸</span>
+        <div><small>Bài học hôm nay</small><b id="lessonCounter">Câu 1 / 10</b></div>
+        <img id="lessonMascot" src="assets/stickers/minmin-v2/minmin-v2-14.png" alt="" class="tiny-sticker">
       </div>
+
       <div class="lesson-card">
         <span class="topic-tag" id="lessonTopic">CHÀO HỎI</span>
         <h2 id="lessonEn">Hello!</h2>
         <p class="pronounce" id="lessonPron">hờ-lôu</p>
         <p class="meaning" id="lessonVi">Xin chào!</p>
+
         <div class="listen-row">
           <button id="slowBtn">🐢<b>Nghe chậm</b></button>
           <button id="naturalBtn">🔊<b>Nghe tự nhiên</b></button>
         </div>
-        <button class="speak-btn" id="speakBtn">🎙️ <span><b>Mẹ nói thử</b><small id="speakStatus">Bấm vào rồi nói theo</small></span></button>
-        <div id="feedback" class="feedback hidden"></div>
+
+        <button class="speak-btn" id="speakBtn">
+          🎙️
+          <span><b>Bà Ngoại nói thử</b><small id="speakStatus">Bấm vào rồi nói theo</small></span>
+        </button>
+
+        <div id="feedback" class="feedback hidden">
+          <img id="feedbackSticker" alt="">
+          <div><b id="feedbackVi"></b><small id="feedbackEn"></small></div>
+        </div>
       </div>
+
+      <div class="lesson-flowers" id="lessonFlowers"></div>
       <button class="next-btn" id="nextBtn">Câu tiếp theo →</button>
     </section>
 
     <section class="screen" id="topics">
-      <div class="section-head"><button data-go="home">←</button><div><small>Chủ đề</small><b>Đi Mỹ cùng mẹ</b></div><span>✈️💜</span></div>
+      <div class="section-head"><button data-go="home">←</button><div><small>Chủ đề</small><b>Đi Mỹ cùng Ngoại</b></div><span>✈️💜</span></div>
       <div id="topicsList" class="list"></div>
     </section>
 
     <section class="screen" id="listen">
-      <div class="section-head"><button data-go="home">←</button><div><small>Luyện nghe</small><b>Nghe và chọn</b></div><span>🐷👂</span></div>
+      <div class="section-head"><button data-go="home">←</button><div><small>Luyện nghe</small><b>Nghe và chọn</b></div><img src="assets/stickers/momo/momo-14.png" class="tiny-sticker" alt=""></div>
       <div class="quiz-card">
-        <img src="assets/stickers/momo-6.png" class="quiz-mascot" alt="MoMo">
-        <p>MoMo sẽ đọc một câu. Mẹ chọn đúng nghĩa nhé!</p>
+        <img src="assets/stickers/momo/momo-02.png" class="quiz-mascot" alt="MoMo sticker">
+        <p>MoMo sẽ đọc một câu. Bà Ngoại chọn đúng nghĩa nhé!</p>
         <button class="big-audio" id="quizPlay">🔊 Nghe câu này</button>
         <div id="quizOptions"></div>
         <div id="quizFeedback" class="feedback hidden"></div>
@@ -95,30 +112,34 @@
     </section>
 
     <section class="screen" id="help">
-      <div class="section-head"><button data-go="home">←</button><div><small>Khẩn cấp</small><b>Mẹ cần giúp</b></div><span>🆘</span></div>
-      <div class="help-note">Bấm nút để phát câu tiếng Anh cho người đối diện nghe.</div>
+      <div class="section-head"><button data-go="home">←</button><div><small>Khẩn cấp</small><b>Ngoại cần giúp</b></div><span>🆘</span></div>
+      <div class="help-note">Bà Ngoại bấm nút để phát câu tiếng Anh cho người đối diện nghe.</div>
       <div id="helpList" class="list"></div>
     </section>
 
     <section class="screen" id="garden">
       <div class="section-head"><button data-go="home">←</button><div><small>Phần thưởng</small><b>Grandma's Purple Garden</b></div><span>🪻🦋</span></div>
       <div class="garden">
-        <div class="sky">☁️　🦋　☁️</div>
+        <div class="sky">☁️　🐝　🦋　☁️</div>
         <div id="flowers"></div>
         <div class="ground">🌿🌿🌿🌿🌿🌿🌿</div>
         <h3 id="gardenTitle">Học xong một bài để hoa nở nhé!</h3>
-        <p>MinMin và MoMo đang đợi bà ngoại 💜</p>
+        <p>MinMin và MoMo đang đợi Bà Ngoại 💜</p>
+      </div>
+      <div class="journal">
+        <h3>📖 Nhật ký của Ngoại</h3>
+        <div id="journalList"></div>
       </div>
     </section>
   </main>
 </div>
 
-<div id="stickerModal" class="modal hidden">
+<div id="celebration" class="modal hidden">
   <div class="sticker-card">
-    <img id="stickerImage" alt="">
-    <h2 id="stickerVi"></h2>
-    <p id="stickerEn"></p>
-    <button id="stickerClose">Tiếp tục 💜</button>
+    <img id="celebrationImage" alt="">
+    <h2 id="celebrationVi"></h2>
+    <p id="celebrationEn"></p>
+    <button id="celebrationClose">Tiếp tục 💜</button>
   </div>
 </div>
 

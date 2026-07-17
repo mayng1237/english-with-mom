@@ -1,12 +1,12 @@
 {
-  "name": "English with Mom",
-  "short_name": "English Mom",
-  "description": "Học tiếng Anh cùng mẹ, mỗi ngày một chút.",
+  "name": "English with Grandma",
+  "short_name": "English Grandma",
+  "description": "Học tiếng Anh cùng Ngoại, mỗi ngày một chút.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f4ecff",
-  "theme_color": "#8b5bb8",
+  "background_color": "#f3eaff",
+  "theme_color": "#8250b5",
   "icons": [
     {
       "src": "icon.png",
