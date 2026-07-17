@@ -81,13 +81,16 @@
           <span class="topic-tag" id="lessonTopic">CHÀO HỎI</span>
           <button class="favorite-btn" id="favoriteBtn" aria-label="Lưu câu yêu thích">☆</button>
         </div>
-        <h2 id="lessonEn">Hello!</h2>
+        <h2 id="lessonEn" class="karaoke-sentence" aria-live="polite">Hello!</h2>
+        <div id="chunkPreview" class="chunk-preview hidden"></div>
         <p class="meaning" id="lessonVi">Xin chào!</p>
 
-        <div class="listen-row">
-          <button id="slowBtn">🐢<b>Nghe chậm</b></button>
-          <button id="naturalBtn">🔊<b>Nghe tự nhiên</b></button>
+        <div class="listen-row listen-row-v8">
+          <button id="slowBtn">🐢<b>Chậm</b><small>0.58×</small></button>
+          <button id="naturalBtn">🔊<b>Tự nhiên</b><small>0.88×</small></button>
+          <button id="fastBtn">🐇<b>Nhanh</b><small>1.02×</small></button>
         </div>
+        <button class="chunk-btn" id="chunkBtn">🧩 Nghe câu theo từng phần</button>
 
         <button class="speak-btn" id="speakBtn">
           🎙️
@@ -107,6 +110,23 @@
             <p id="feedbackEn"></p>
           </div>
         </div>
+
+        <div id="pronunciationPanel" class="pronunciation-panel hidden">
+          <div class="score-head">
+            <div>
+              <small>Điểm nghe được</small>
+              <strong id="pronunciationScore">0</strong><span>/100</span>
+            </div>
+            <span id="scoreBadge">Đang kiểm tra</span>
+          </div>
+          <div id="heardTranscript" class="heard-transcript"></div>
+          <div id="wordFeedback" class="word-feedback"></div>
+          <p id="pronunciationTip" class="pronunciation-tip"></p>
+          <label class="auto-replay-toggle">
+            <input id="autoReplayToggle" type="checkbox" checked>
+            <span>Tự đọc lại chậm khi Ngoại cần luyện thêm</span>
+          </label>
+        </div>
       </div>
 
       <div class="lesson-flowers" id="lessonFlowers"></div>
@@ -115,6 +135,7 @@
 
     <section class="screen" id="conversation">
       <div class="section-head"><button data-go="home">←</button><div><small>Học cùng gia đình</small><b>Nói với MinMin & MoMo</b></div><span>💬💜</span></div>
+      <div class="voice-note">🎧 Giọng hai bé vẫn là giọng iPhone tạm thời. V8 tập trung giúp Ngoại nghe, nói và sửa từng từ nhanh hơn.</div>
       <div class="conversation-card">
         <div class="chat-line left">
           <img id="conversationAvatar" src="assets/stickers/minmin-v2/minmin-v2-02.png" alt="">

@@ -1,7 +1,7 @@
 {
   "name": "English with Grandma",
   "short_name": "Grandma English",
-  "description": "1.000 câu tiếng Anh cùng MinMin và MoMo, với sticker vui không chữ và lời động viên từ hai cháu.",
+  "description": "English with Grandma V8: chấm từng từ, 3 tốc độ nghe, chia nhỏ câu và tự đọc lại.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

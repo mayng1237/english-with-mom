@@ -59,3 +59,51 @@ h1{font-size:29px;line-height:1.1;margin:0;letter-spacing:-.8px}h1 span{color:va
 .family-feedback small{display:block;color:#8b63ad;font-size:13px;margin-bottom:4px}
 .family-feedback b{display:block;font-size:18px}
 .family-feedback p{margin:4px 0 0;font-size:14px;line-height:1.4;font-weight:650}
+
+.voice-note{background:#eef7ff;border:1px solid #d7e9fa;color:#52677f;border-radius:17px;padding:10px 13px;margin:-4px 0 12px;font-size:13px;line-height:1.4}
+button:disabled{opacity:.62;cursor:wait;transform:none!important}
+.speak-btn:disabled,.reply-box button:disabled{background:#f2edf6;animation:listeningPulse .75s ease-in-out infinite alternate}
+@keyframes listeningPulse{from{box-shadow:0 0 0 0 rgba(125,73,184,.1)}to{box-shadow:0 0 0 8px rgba(125,73,184,.12)}}
+
+
+/* ---------- V8 Smart Pronunciation Coach ---------- */
+.listen-row-v8{grid-template-columns:repeat(3,1fr)}
+.listen-row-v8 button{padding:12px 6px;font-size:21px}
+.listen-row-v8 small{display:block;font-size:10px;margin-top:3px;color:#8068a0}
+.chunk-btn{width:100%;border:1px solid #dfcfef;background:#fff;border-radius:16px;padding:11px;margin-top:10px;color:var(--p);font-weight:800}
+.karaoke-sentence{line-height:1.35}
+.karaoke-word{display:inline-block;border-radius:8px;padding:0 2px;transition:background .12s,transform .12s,color .12s}
+.karaoke-word.active{background:#ffe88f;color:#5d3d00;transform:translateY(-2px)}
+.punctuation{display:inline-block}
+.chunk-preview{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin:-2px 0 14px}
+.chunk-preview span{background:#f3ecfb;color:#6f4a98;border-radius:12px;padding:7px 10px;font-weight:800;transition:.15s}
+.chunk-preview span.active{background:#ffe69a;color:#614800;transform:scale(1.05)}
+.chunk-preview b{color:#b095c8}
+.pronunciation-panel{margin-top:13px;background:#fbf9ff;border:1px solid #e5d8f1;border-radius:22px;padding:14px;text-align:left}
+.score-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.score-head small{display:block;color:var(--muted);font-size:11px}
+.score-head strong{font-size:32px;color:var(--p)}
+.score-head>div>span{color:var(--muted);font-weight:800}
+#scoreBadge{border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}
+#scoreBadge.excellent{background:#dcf4d5;color:#376a31}
+#scoreBadge.good{background:#fff0b9;color:#775a00}
+#scoreBadge.practice{background:#f0e5fb;color:#70409f}
+.heard-transcript{margin:11px 0;background:white;border-radius:14px;padding:10px 11px}
+.heard-transcript small,.heard-transcript b{display:block}
+.heard-transcript small{color:var(--muted);font-size:11px;margin-bottom:3px}
+.word-feedback{display:flex;flex-wrap:wrap;gap:7px}
+.word-chip{border-radius:13px;padding:7px 9px;min-width:55px}
+.word-chip b,.word-chip small{display:block}
+.word-chip b{font-size:13px}
+.word-chip small{font-size:9px;margin-top:2px;opacity:.78}
+.word-chip.good{background:#ddf4d8;color:#356a30}
+.word-chip.close{background:#fff0bd;color:#735900}
+.word-chip.retry{background:#f3e8fb;color:#7a409e}
+.pronunciation-tip{font-size:13px;line-height:1.45;margin:11px 0 8px;color:#654478;font-weight:700}
+.auto-replay-toggle{display:flex;align-items:center;gap:8px;border-top:1px solid #e9ddf2;padding-top:10px;color:#665a70;font-size:12px}
+.auto-replay-toggle input{width:19px;height:19px;accent-color:var(--p)}
+@media(max-width:360px){
+ .listen-row-v8{grid-template-columns:1fr}
+ .listen-row-v8 button{display:flex;justify-content:center;align-items:center;gap:6px}
+ .listen-row-v8 button b,.listen-row-v8 button small{display:inline}
+}

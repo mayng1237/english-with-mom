@@ -70,7 +70,180 @@ function save(){
  localStorage.setItem("ewgCompletedDays",JSON.stringify(state.completedDays));
 }
 function dailyLessons(day=activeDay){return curriculum.filter(x=>x.day===day)}
-function speak(text,rate=.82){if(!("speechSynthesis"in window)){alert("Thiết bị chưa hỗ trợ đọc giọng.");return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate;u.pitch=1.03;speechSynthesis.speak(u)}
+
+// ---------- V8: child-like character voices ----------
+let availableVoices=[];
+const characterVoiceConfig={
+ MinMin:{pitch:1.50,rate:.88,volume:1,preferred:["Samantha","Ava","Allison","Susan","Karen","Moira"]},
+ MoMo:{pitch:1.32,rate:.94,volume:1,preferred:["Ava","Samantha","Nicky","Joelle","Tessa","Karen"]},
+ Grandma:{pitch:1.03,rate:.80,volume:1,preferred:["Samantha","Ava","Allison","Karen"]}
+};
+function refreshVoices(){availableVoices=window.speechSynthesis?.getVoices?.()||[]}
+refreshVoices();
+if("speechSynthesis"in window){
+ speechSynthesis.addEventListener?.("voiceschanged",refreshVoices);
+ setTimeout(refreshVoices,300);setTimeout(refreshVoices,1200);
+}
+function chooseVoice(character="Grandma"){
+ refreshVoices();
+ const cfg=characterVoiceConfig[character]||characterVoiceConfig.Grandma;
+ const english=availableVoices.filter(v=>/^en(-|_)/i.test(v.lang||""));
+ for(const wanted of cfg.preferred){
+   const found=english.find(v=>(v.name||"").toLowerCase().includes(wanted.toLowerCase()));
+   if(found)return found;
+ }
+ return english.find(v=>/(female|samantha|ava|allison|susan|karen|moira|tessa|joelle|nicky)/i.test(v.name||""))||english[0]||availableVoices[0]||null;
+}
+function speakAs(character,text,options={}){
+ if(!("speechSynthesis"in window)){alert("Thiết bị chưa hỗ trợ đọc giọng.");return}
+ const cfg=characterVoiceConfig[character]||characterVoiceConfig.Grandma;
+ speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang="en-US";u.rate=options.rate??cfg.rate;u.pitch=options.pitch??cfg.pitch;u.volume=1;
+ const voice=chooseVoice(character);if(voice)u.voice=voice;
+ speechSynthesis.speak(u);
+}
+function speak(text,rate=.82){speakAs("Grandma",text,{rate,pitch:1.06})}
+
+
+// ---------- V8: Smart Pronunciation Coach ----------
+let activeSpeechToken=0;
+
+function escapeHtml(value){
+ return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
+}
+function displayWords(text){
+ return String(text||"").match(/[A-Za-zÀ-ỹ0-9']+|[^\sA-Za-zÀ-ỹ0-9']/g)||[];
+}
+function spokenWords(text){
+ return normalizeSpeech(text).split(" ").filter(Boolean);
+}
+function levenshtein(a,b){
+ const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
+ for(let i=0;i<=m;i++)dp[i][0]=i;
+ for(let j=0;j<=n;j++)dp[0][j]=j;
+ for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){
+   dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+ }
+ return dp[m][n];
+}
+function wordSimilarity(a,b){
+ a=normalizeSpeech(a);b=normalizeSpeech(b);
+ if(!a||!b)return 0;
+ if(a===b)return 1;
+ return Math.max(0,1-levenshtein(a,b)/Math.max(a.length,b.length));
+}
+function analyzePronunciation(target,said){
+ const targets=spokenWords(target),heard=spokenWords(said);
+ const used=new Set(),details=[];
+ for(const targetWord of targets){
+   let bestIndex=-1,best=.0;
+   heard.forEach((heardWord,i)=>{
+     if(used.has(i))return;
+     const sim=wordSimilarity(targetWord,heardWord);
+     if(sim>best){best=sim;bestIndex=i}
+   });
+   if(bestIndex>=0&&best>=.48)used.add(bestIndex);
+   details.push({
+     target:targetWord,
+     heard:bestIndex>=0?heard[bestIndex]:"",
+     similarity:bestIndex>=0?best:0,
+     status:best>=.86?"good":best>=.58?"close":"retry"
+   });
+ }
+ const raw=details.length?details.reduce((sum,x)=>sum+x.similarity,0)/details.length:0;
+ const coverage=targets.length?Math.min(1,heard.length/targets.length):0;
+ const score=Math.round(Math.max(0,Math.min(100,(raw*.88+coverage*.12)*100)));
+ return {score,details,heard:said||"",needsPractice:details.filter(x=>x.status!=="good")};
+}
+function chunkSentence(text){
+ const words=String(text||"").trim().split(/\s+/).filter(Boolean);
+ if(words.length<=3)return [text];
+ const chunkSize=words.length>=9?3:words.length>=6?2:Math.ceil(words.length/2);
+ const chunks=[];
+ for(let i=0;i<words.length;i+=chunkSize)chunks.push(words.slice(i,i+chunkSize).join(" "));
+ return chunks;
+}
+function renderSentenceWords(text,activeIndex=-1){
+ let wordIndex=0;
+ $("#lessonEn").innerHTML=displayWords(text).map(token=>{
+   if(/^[A-Za-zÀ-ỹ0-9']+$/.test(token)){
+     const cls=wordIndex===activeIndex?"karaoke-word active":"karaoke-word";
+     return `<span class="${cls}" data-word-index="${wordIndex++}">${escapeHtml(token)}</span>`;
+   }
+   return `<span class="punctuation">${escapeHtml(token)}</span>`;
+ }).join(" ");
+}
+function speakWithHighlight(text,rate=.82,character="Grandma"){
+ if(!("speechSynthesis"in window)){alert("Thiết bị chưa hỗ trợ đọc giọng.");return}
+ const token=++activeSpeechToken,cfg=characterVoiceConfig[character]||characterVoiceConfig.Grandma;
+ speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang="en-US";u.rate=rate;u.pitch=character==="Grandma"?1.06:cfg.pitch;u.volume=1;
+ const voice=chooseVoice(character);if(voice)u.voice=voice;
+ const targetWords=spokenWords(text);
+ let fallbackIndex=0;
+ u.onboundary=e=>{
+   if(token!==activeSpeechToken)return;
+   if(e.name==="word"){
+     const before=text.slice(0,e.charIndex);
+     const index=Math.max(0,spokenWords(before).length);
+     renderSentenceWords(text,Math.min(index,targetWords.length-1));
+     fallbackIndex=index;
+   }
+ };
+ u.onend=()=>{if(token===activeSpeechToken)setTimeout(()=>renderSentenceWords(text),180)};
+ u.onerror=()=>{if(token===activeSpeechToken)renderSentenceWords(text)};
+ speechSynthesis.speak(u);
+}
+async function speakChunks(text){
+ const chunks=chunkSentence(text);
+ $("#chunkPreview").classList.remove("hidden");
+ $("#chunkPreview").innerHTML=chunks.map((x,i)=>`<span data-chunk="${i}">${escapeHtml(x)}</span>`).join('<b>＋</b>');
+ for(let i=0;i<chunks.length;i++){
+   $$("#chunkPreview [data-chunk]").forEach((el,j)=>el.classList.toggle("active",i===j));
+   await new Promise(resolve=>{
+     if(!("speechSynthesis"in window)){resolve();return}
+     const u=new SpeechSynthesisUtterance(chunks[i]);
+     u.lang="en-US";u.rate=.60;u.pitch=1.06;
+     const voice=chooseVoice("Grandma");if(voice)u.voice=voice;
+     u.onend=()=>setTimeout(resolve,260);u.onerror=resolve;
+     speechSynthesis.cancel();speechSynthesis.speak(u);
+   });
+ }
+ $$("#chunkPreview [data-chunk]").forEach(el=>el.classList.remove("active"));
+ setTimeout(()=>speakWithHighlight(text,.72),280);
+}
+function renderPronunciationResult(target,said,analysis){
+ const panel=$("#pronunciationPanel");
+ panel.classList.remove("hidden");
+ $("#pronunciationScore").textContent=analysis.score;
+ $("#heardTranscript").innerHTML=said
+   ? `<small>App nghe được:</small><b>“${escapeHtml(said)}”</b>`
+   : `<small>App chưa nghe rõ câu nào.</small>`;
+ const badge=$("#scoreBadge");
+ if(analysis.score>=88){badge.textContent="Rất tốt 🌟";badge.className="excellent"}
+ else if(analysis.score>=70){badge.textContent="Gần đúng 🌷";badge.className="good"}
+ else{badge.textContent="Luyện thêm 💜";badge.className="practice"}
+ $("#wordFeedback").innerHTML=analysis.details.map(x=>{
+   const icon=x.status==="good"?"✓":x.status==="close"?"~":"↻";
+   const heard=x.heard&&x.heard!==x.target?`<small>nghe: ${escapeHtml(x.heard)}</small>`:"";
+   return `<span class="word-chip ${x.status}"><b>${icon} ${escapeHtml(x.target)}</b>${heard}</span>`;
+ }).join("");
+ const retry=analysis.needsPractice.map(x=>x.target);
+ $("#pronunciationTip").textContent=
+   analysis.score>=88
+   ?"MinMin nghe rất rõ! Ngoại có thể sang câu tiếp theo rồi."
+   :retry.length
+     ?`MoMo muốn Ngoại luyện lại: ${retry.slice(0,4).join(", ")}${retry.length>4?"…":""}`
+     :"Ngoại thử nói chậm và gần điện thoại hơn một chút nha.";
+}
+function resetPronunciationPanel(){
+ $("#pronunciationPanel").classList.add("hidden");
+ $("#heardTranscript").innerHTML="";
+ $("#wordFeedback").innerHTML="";
+}
+
 function flowerRow(done,total=10){return Array.from({length:total},(_,i)=>`<span class="flower-dot ${i<done?"done":""}">${i<done?"🌷":"🌱"}</span>`).join("")}
 function go(id){$$(".screen").forEach(x=>x.classList.remove("active"));$("#"+id).classList.add("active");scrollTo({top:0,behavior:"smooth"});if(id==="garden")renderGarden();if(id==="favorites")renderFavorites();if(id==="topics")renderTopics();if(id==="conversation")renderConversation()}
 function daysSince(date){if(!date)return 999;const then=new Date(date+"T00:00:00"),now=new Date();now.setHours(0,0,0,0);return Math.floor((now-then)/86400000)}
@@ -111,7 +284,7 @@ function renderHome(){
 function renderLesson(){
  const lessons=dailyLessons(),l=lessons[idx];if(!l)return;
  $("#lessonCounter").textContent=`Bài ${activeDay} • Câu ${idx+1} / 10`;
- $("#lessonTopic").textContent=l.topic;$("#lessonEn").textContent=l.en;$("#lessonVi").textContent=l.vi;
+ $("#lessonTopic").textContent=l.topic;renderSentenceWords(l.en);$("#lessonVi").textContent=l.vi;resetPronunciationPanel();$("#chunkPreview").classList.add("hidden");
  $("#feedback").className="feedback hidden";$("#speakStatus").textContent="Bấm vào rồi nói theo";
  $("#lessonFlowers").innerHTML=flowerRow(idx,10);
  $("#nextBtn").textContent=idx===9?"Hoàn thành bài học 🌷":"Câu tiếp theo →";
@@ -128,16 +301,78 @@ function showFeedback(ok,item=null){
  $("#feedback").className=ok?"family-feedback":"family-feedback try";
 }
 function showCelebration(item){$("#celebrationImage").src=`assets/stickers/${item.img}`;$("#celebrationVi").textContent=item.vi;$("#celebrationEn").textContent=item.en;$("#celebration").classList.remove("hidden")}
-function recognize(target,callback){
+function normalizeSpeech(text){
+ return (text||"").toLowerCase().replace(/[^\w\s']/g,"").replace(/\s+/g," ").trim();
+}
+function speechMatchScore(target,said){
+ const targetWords=normalizeSpeech(target).split(" ").filter(Boolean);
+ const saidWords=normalizeSpeech(said).split(" ").filter(Boolean);
+ if(!targetWords.length)return 0;
+ let matches=0;const remaining=[...saidWords];
+ for(const word of targetWords){
+   const exact=remaining.findIndex(x=>x===word);
+   if(exact>=0){matches++;remaining.splice(exact,1);continue}
+   const close=remaining.findIndex(x=>x.startsWith(word.slice(0,Math.max(2,word.length-1)))||word.startsWith(x.slice(0,Math.max(2,x.length-1))));
+   if(close>=0){matches+=.72;remaining.splice(close,1)}
+ }
+ return matches/targetWords.length;
+}
+function recognize(target,callback,onStatus=()=>{}){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SR){callback(false,"Safari chưa hỗ trợ chấm giọng trực tiếp.");return}
- const r=new SR();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;r.start();
- r.onresult=e=>{const said=e.results[0][0].transcript.toLowerCase();const words=target.toLowerCase().replace(/[^\w\s']/g,"").split(/\s+/);const score=words.filter(w=>said.includes(w)).length/words.length;callback(score>=.7,said)};
- r.onerror=()=>callback(false,"");
+ if(!SR){callback(false,"","unsupported",0);return}
+ const r=new SR();r.lang="en-US";r.continuous=false;r.interimResults=true;r.maxAlternatives=1;
+ let finished=false,bestTranscript="",bestScore=0,silenceTimer=null;
+ const hardTimer=setTimeout(()=>finish("timeout"),5000);
+ function finish(reason="complete"){
+   if(finished)return;finished=true;clearTimeout(hardTimer);clearTimeout(silenceTimer);
+   try{r.stop()}catch(_){}
+   callback(bestScore>=.62,bestTranscript,reason,bestScore);
+ }
+ function schedule(delay){clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>finish("silence"),delay)}
+ r.onstart=()=>onStatus("listening");
+ r.onspeechstart=()=>onStatus("hearing");
+ r.onresult=e=>{
+   let finalText="",interimText="";
+   for(let i=e.resultIndex;i<e.results.length;i++){
+     const t=e.results[i][0].transcript;
+     if(e.results[i].isFinal)finalText+=t+" ";else interimText+=t+" ";
+   }
+   const candidate=(finalText||interimText).trim();
+   if(!candidate)return;
+   const score=speechMatchScore(target,candidate);
+   if(score>=bestScore){bestScore=score;bestTranscript=candidate}
+   onStatus("processing",candidate,score);
+   if(score>=.88)finish("matched");
+   else if(finalText)finish("final");
+   else if(score>=.60)schedule(250);
+   else schedule(600);
+ };
+ r.onspeechend=()=>schedule(160);
+ r.onnomatch=()=>finish("nomatch");
+ r.onerror=e=>{if(!(e.error==="aborted"&&finished))finish(e.error||"error")};
+ r.onend=()=>{if(!finished)finish("ended")};
+ try{r.start()}catch(e){clearTimeout(hardTimer);callback(false,"","start-error",0)}
 }
 function startRecognition(){
- const target=dailyLessons()[idx].en;$("#speakStatus").textContent="Bà Ngoại nói ngay bây giờ nhé...";
- recognize(target,(ok)=>{showFeedback(ok);$("#speakStatus").textContent="Bấm để nói lại"});
+ const target=dailyLessons()[idx].en;
+ $("#speakBtn").disabled=true;
+ $("#speakStatus").textContent="Đang mở microphone...";
+ resetPronunciationPanel();
+ recognize(target,(ok,said,reason,engineScore)=>{
+   const analysis=analyzePronunciation(target,said);
+   const accepted=analysis.score>=70;
+   renderPronunciationResult(target,said,analysis);
+   showFeedback(accepted);
+   $("#speakStatus").textContent=accepted?"MinMin và MoMo nghe thấy rồi!":"Ngoại xem từ cần luyện bên dưới nha";
+   $("#speakBtn").disabled=false;
+   if(!accepted&&$("#autoReplayToggle")?.checked){
+     setTimeout(()=>speakWithHighlight(target,.58),650);
+   }
+ },(status,heard)=>{
+   if(status==="listening")$("#speakStatus").textContent="Ngoại nói ngay nhé...";
+   if(status==="hearing")$("#speakStatus").textContent="Đang nghe Bà Ngoại...";
+   if(status==="processing"&&heard)$("#speakStatus").textContent=`Đã nghe: “${heard}”`;
+ });
 }
 async function toggleRecord(){
  if(recorder&&recorder.state==="recording"){recorder.stop();return}
@@ -186,25 +421,27 @@ function renderTopics(){
 }
 function renderConversation(){
  const c=conversations[conversationIdx];$("#conversationAvatar").src=`assets/stickers/${c.avatar}`;$("#conversationSpeaker").textContent=`${c.who} nói:`;$("#conversationPrompt").textContent=c.prompt;$("#conversationPromptVi").textContent=c.promptVi;$("#conversationReply").textContent=c.reply;$("#conversationReplyVi").textContent=c.replyVi;$("#conversationFeedback").className="family-feedback hidden";
- setTimeout(()=>speak(c.prompt,.82),300);
+ setTimeout(()=>speakAs(c.who,c.prompt),180);
 }
 function conversationSpeak(){
- const c=conversations[conversationIdx];
- recognize(c.reply,(ok)=>{
+ const c=conversations[conversationIdx],button=$("#conversationSpeak");
+ button.disabled=true;button.textContent="🎙️ Đang nghe Ngoại...";
+ recognize(c.reply,(ok,said)=>{ const pronunciation=analyzePronunciation(c.reply,said); ok=pronunciation.score>=70;
    const coach=c.who==="MinMin"?"MoMo":"MinMin";
    const avatar=coach==="MinMin"?pick(happyMinmin):pick(happyMomo);
    const msg=ok
-     ? (coach==="MinMin"
-        ? {main:"Tuyệt quá, Bà Ngoại!",sub:"MinMin nghe Ngoại nói rất rõ! 💜"}
-        : {main:"Giỏi quá Ngoại ơi!",sub:"MoMo nghe thấy rồi! Mình nói câu tiếp theo nha! 🌷"})
-     : (coach==="MinMin"
-        ? {main:"Không sao đâu Ngoại.",sub:"MinMin nghe lại cùng Ngoại rồi mình thử thêm lần nữa nha! 💜"}
-        : {main:"Gần đúng rồi đó Ngoại!",sub:"MoMo đang lắng nghe. Ngoại nói chậm thêm một chút nha! 🌷"});
+     ? (coach==="MinMin"?{main:"Tuyệt quá, Bà Ngoại!",sub:"MinMin nghe Ngoại nói rất rõ! 💜"}:{main:"Giỏi quá Ngoại ơi!",sub:"MoMo nghe thấy rồi! Mình nói câu tiếp theo nha! 🌷"})
+     : (coach==="MinMin"?{main:"Không sao đâu Ngoại.",sub:"MinMin nghe lại cùng Ngoại rồi mình thử thêm lần nữa nha! 💜"}:{main:"Gần đúng rồi đó Ngoại!",sub:"MoMo đang lắng nghe. Ngoại nói chậm thêm một chút nha! 🌷"});
    $("#conversationFeedbackAvatar").src=`assets/stickers/${avatar}`;
    $("#conversationFeedbackSpeaker").textContent=`${coach} nói:`;
    $("#conversationFeedbackMain").textContent=msg.main;
    $("#conversationFeedbackSub").textContent=msg.sub;
    $("#conversationFeedback").className=ok?"family-feedback":"family-feedback try";
+   button.disabled=false;button.textContent="🎙️ Bà Ngoại nói";
+   setTimeout(()=>speakAs(coach,ok?msg.main:msg.sub,{rate:.9}),100);
+ },(status)=>{
+   if(status==="hearing")button.textContent="👂 Đang nghe...";
+   if(status==="processing")button.textContent="⚡ Đang kiểm tra...";
  });
 }
 function renderHelp(){$("#helpList").innerHTML=helpPhrases.map((p,i)=>`<button class="list-item" data-help="${i}"><span class="icon">${p[0]}</span><span><b>${p[1]}</b><small>${p[2]}</small></span><span class="help-play">🔊</span></button>`).join("")}
@@ -233,9 +470,9 @@ async function init(){
 $$("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("#gardenShortcut").onclick=()=>go("garden");
 $("#startToday").onclick=()=>{activeDay=state.day;idx=state.sentence;renderLesson();go("lesson")};
-$("#slowBtn").onclick=()=>speak(dailyLessons()[idx].en,.58);$("#naturalBtn").onclick=()=>speak(dailyLessons()[idx].en,.9);$("#speakBtn").onclick=startRecognition;$("#recordBtn").onclick=toggleRecord;$("#favoriteBtn").onclick=toggleFavorite;$("#nextBtn").onclick=nextLesson;
+$("#slowBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,.58);$("#naturalBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,.88);$("#fastBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,1.02);$("#chunkBtn").onclick=()=>speakChunks(dailyLessons()[idx].en);$("#speakBtn").onclick=startRecognition;$("#recordBtn").onclick=toggleRecord;$("#favoriteBtn").onclick=toggleFavorite;$("#nextBtn").onclick=nextLesson;
 $("#quizPlay").onclick=()=>speak(dailyLessons(state.day)[quizIdx].en,.72);
-$("#conversationListen").onclick=()=>speak(conversations[conversationIdx].reply,.78);$("#conversationSpeak").onclick=conversationSpeak;$("#conversationNext").onclick=()=>{conversationIdx=(conversationIdx+1)%conversations.length;renderConversation()};
+$("#conversationListen").onclick=()=>speakAs("Grandma",conversations[conversationIdx].reply,{rate:.78,pitch:1.04});$("#conversationSpeak").onclick=conversationSpeak;$("#conversationNext").onclick=()=>{conversationIdx=(conversationIdx+1)%conversations.length;renderConversation()};
 $("#celebrationClose").onclick=()=>$("#celebration").classList.add("hidden");
 $("#finalClose").onclick=()=>{$("#finalCelebration").classList.add("hidden");go("garden")};
 $("#installHelp").onclick=()=>alert("Trên iPhone: mở trang bằng Safari → bấm Chia sẻ → chọn “Thêm vào Màn hình chính”.");
