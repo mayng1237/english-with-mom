@@ -425,30 +425,97 @@ function renderConversation(){
 }
 function conversationSpeak(){
  const c=conversations[conversationIdx],button=$("#conversationSpeak");
- button.disabled=true;button.textContent="🎙️ Đang nghe Ngoại...";
- recognize(c.reply,(ok,said)=>{ const pronunciation=analyzePronunciation(c.reply,said); ok=pronunciation.score>=70;
+ button.disabled=true;
+ button.textContent="🎙️ Đang nghe Ngoại...";
+ $("#conversationScoreBox")?.classList.add("hidden");
+
+ recognize(c.reply,(ok,said)=>{
+   const analysis=analyzePronunciation(c.reply,said);
+   const score=analysis.score;
    const coach=c.who==="MinMin"?"MoMo":"MinMin";
    const avatar=coach==="MinMin"?pick(happyMinmin):pick(happyMomo);
-   const msg=ok
-     ? (coach==="MinMin"?{main:"Tuyệt quá, Bà Ngoại!",sub:"MinMin nghe Ngoại nói rất rõ! 💜"}:{main:"Giỏi quá Ngoại ơi!",sub:"MoMo nghe thấy rồi! Mình nói câu tiếp theo nha! 🌷"})
-     : (coach==="MinMin"?{main:"Không sao đâu Ngoại.",sub:"MinMin nghe lại cùng Ngoại rồi mình thử thêm lần nữa nha! 💜"}:{main:"Gần đúng rồi đó Ngoại!",sub:"MoMo đang lắng nghe. Ngoại nói chậm thêm một chút nha! 🌷"});
+
    $("#conversationFeedbackAvatar").src=`assets/stickers/${avatar}`;
-   $("#conversationFeedbackSpeaker").textContent=`${coach} nói:`;
-   $("#conversationFeedbackMain").textContent=msg.main;
-   $("#conversationFeedbackSub").textContent=msg.sub;
-   $("#conversationFeedback").className=ok?"family-feedback":"family-feedback try";
-   button.disabled=false;button.textContent="🎙️ Bà Ngoại nói";
-   setTimeout(()=>speakAs(coach,ok?msg.main:msg.sub,{rate:.9}),100);
- },(status)=>{
+   $("#conversationFeedbackSpeaker").textContent=`${coach} chấm:`;
+
+   if(score>=88){
+     $("#conversationFeedbackMain").textContent="Ngoại nói rất rõ!";
+     $("#conversationFeedbackSub").textContent="Mình sang câu tiếp theo nha 🌷";
+   }else if(score>=70){
+     $("#conversationFeedbackMain").textContent="Ngoại nói gần đúng rồi!";
+     $("#conversationFeedbackSub").textContent="Luyện lại những từ màu vàng thêm một lần nha.";
+   }else{
+     $("#conversationFeedbackMain").textContent="Mình thử lại chậm hơn nha Ngoại.";
+     $("#conversationFeedbackSub").textContent="Nhìn các từ bên dưới để biết từ nào cần luyện thêm.";
+   }
+
+   $("#conversationScore").textContent=score;
+   $("#conversationWordFeedback").innerHTML=analysis.details.map(item=>{
+     const symbol=item.status==="good"?"✓":item.status==="close"?"~":"↻";
+     return `<span class="${item.status}">${symbol} ${escapeHtml(item.target)}</span>`;
+   }).join("");
+
+   $("#conversationScoreBox").classList.remove("hidden");
+   $("#conversationFeedback").className=score>=70?"family-feedback":"family-feedback try";
+
+   button.disabled=false;
+   button.textContent="🎙️ Bà Ngoại nói";
+
+   // Do not speak any feedback aloud here.
+   // Ngoại only sees the score and word-by-word guidance.
+ },(status,heard)=>{
+   if(status==="listening")button.textContent="🎙️ Ngoại nói ngay nhé";
    if(status==="hearing")button.textContent="👂 Đang nghe...";
-   if(status==="processing")button.textContent="⚡ Đang kiểm tra...";
+   if(status==="processing"&&heard)button.textContent="⚡ Đang chấm điểm...";
  });
 }
 function renderHelp(){$("#helpList").innerHTML=helpPhrases.map((p,i)=>`<button class="list-item" data-help="${i}"><span class="icon">${p[0]}</span><span><b>${p[1]}</b><small>${p[2]}</small></span><span class="help-play">🔊</span></button>`).join("")}
+let quizAnswered=false;
+
+function playQuizSentence(){
+ speak(dailyLessons(state.day)[quizIdx].en,.72);
+}
+
 function renderQuiz(){
- const lessons=dailyLessons(state.day),q=lessons[quizIdx],wrong=lessons[(quizIdx+3)%10],opts=Math.random()>.5?[q.vi,wrong.vi]:[wrong.vi,q.vi];
- $("#quizOptions").innerHTML=opts.map(x=>`<button class="quiz-option">${x}</button>`).join("");$("#quizFeedback").className="feedback hidden";
- $$(".quiz-option").forEach(b=>b.onclick=()=>{const ok=b.textContent===q.vi;$("#quizFeedback").className=ok?"feedback":"feedback try";$("#quizFeedback").textContent=ok?"Đúng rồi, Bà Ngoại! Tuyệt lắm 💜":"Gần đúng rồi. Bà Ngoại nghe lại nhé 🌷";if(ok)setTimeout(()=>{quizIdx=(quizIdx+1)%10;renderQuiz()},900)});
+ const lessons=dailyLessons(state.day);
+ const q=lessons[quizIdx];
+ const wrong=lessons[(quizIdx+3)%10];
+ const opts=Math.random()>.5?[q.vi,wrong.vi]:[wrong.vi,q.vi];
+
+ quizAnswered=false;
+ $("#quizFeedback").className="feedback hidden";
+ $("#quizFeedback").innerHTML="";
+ $("#quizActions").classList.add("hidden");
+
+ $("#quizOptions").innerHTML=opts.map(x=>`<button class="quiz-option">${escapeHtml(x)}</button>`).join("");
+
+ $$(".quiz-option").forEach(button=>{
+   button.disabled=false;
+   button.onclick=()=>{
+     if(quizAnswered)return;
+     quizAnswered=true;
+
+     const ok=button.textContent===q.vi;
+     $$(".quiz-option").forEach(option=>{
+       option.disabled=true;
+       if(option.textContent===q.vi)option.classList.add("correct");
+     });
+     button.classList.add("selected");
+     if(!ok)button.classList.add("wrong");
+
+     $("#quizFeedback").className=ok?"feedback":"feedback try";
+     $("#quizFeedback").innerHTML=ok
+       ? `<b>🌷 Đúng rồi, Bà Ngoại!</b><p><strong>${escapeHtml(q.en)}</strong> có nghĩa là <strong>${escapeHtml(q.vi)}</strong>.</p><small>Ngoại có thể nghe lại hoặc tự bấm “Câu tiếp theo”.</small>`
+       : `<b>💜 Mình nghe lại thêm một lần nha Ngoại.</b><p>Đáp án đúng là <strong>${escapeHtml(q.vi)}</strong>.</p><small>Kết quả sẽ ở đây cho đến khi Ngoại tự bấm sang câu mới.</small>`;
+
+     $("#quizActions").classList.remove("hidden");
+   };
+ });
+}
+
+function nextQuizQuestion(){
+ quizIdx=(quizIdx+1)%10;
+ renderQuiz();
 }
 function renderGarden(){
  const n=state.completed,world=[];
@@ -471,7 +538,7 @@ $$("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("#gardenShortcut").onclick=()=>go("garden");
 $("#startToday").onclick=()=>{activeDay=state.day;idx=state.sentence;renderLesson();go("lesson")};
 $("#slowBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,.58);$("#naturalBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,.88);$("#fastBtn").onclick=()=>speakWithHighlight(dailyLessons()[idx].en,1.02);$("#chunkBtn").onclick=()=>speakChunks(dailyLessons()[idx].en);$("#speakBtn").onclick=startRecognition;$("#recordBtn").onclick=toggleRecord;$("#favoriteBtn").onclick=toggleFavorite;$("#nextBtn").onclick=nextLesson;
-$("#quizPlay").onclick=()=>speak(dailyLessons(state.day)[quizIdx].en,.72);
+$("#quizPlay").onclick=playQuizSentence;$("#quizReplay").onclick=playQuizSentence;$("#quizNext").onclick=nextQuizQuestion;
 $("#conversationListen").onclick=()=>speakAs("Grandma",conversations[conversationIdx].reply,{rate:.78,pitch:1.04});$("#conversationSpeak").onclick=conversationSpeak;$("#conversationNext").onclick=()=>{conversationIdx=(conversationIdx+1)%conversations.length;renderConversation()};
 $("#celebrationClose").onclick=()=>$("#celebration").classList.add("hidden");
 $("#finalClose").onclick=()=>{$("#finalCelebration").classList.add("hidden");go("garden")};

@@ -135,8 +135,7 @@
 
     <section class="screen" id="conversation">
       <div class="section-head"><button data-go="home">←</button><div><small>Học cùng gia đình</small><b>Nói với MinMin & MoMo</b></div><span>💬💜</span></div>
-      <div class="voice-note">🎧 Giọng hai bé vẫn là giọng iPhone tạm thời. V8 tập trung giúp Ngoại nghe, nói và sửa từng từ nhanh hơn.</div>
-      <div class="conversation-card">
+<div class="conversation-card">
         <div class="chat-line left">
           <img id="conversationAvatar" src="assets/stickers/minmin-v2/minmin-v2-02.png" alt="">
           <div class="bubble"><small id="conversationSpeaker">MinMin nói:</small><b id="conversationPrompt">Hello, Grandma!</b><p id="conversationPromptVi">Con chào Bà Ngoại!</p></div>
@@ -150,10 +149,19 @@
         </div>
         <div id="conversationFeedback" class="family-feedback hidden">
           <img id="conversationFeedbackAvatar" alt="">
-          <div>
+          <div class="conversation-score-content">
             <small id="conversationFeedbackSpeaker"></small>
             <b id="conversationFeedbackMain"></b>
             <p id="conversationFeedbackSub"></p>
+            <div id="conversationScoreBox" class="conversation-score-box hidden">
+              <div class="conversation-score-number">
+                <strong id="conversationScore">0</strong><span>%</span>
+              </div>
+              <div>
+                <small>Điểm phát âm</small>
+                <div id="conversationWordFeedback" class="conversation-word-feedback"></div>
+              </div>
+            </div>
           </div>
         </div>
         <button class="next-btn" id="conversationNext">Cuộc trò chuyện tiếp theo →</button>
@@ -178,7 +186,11 @@
         <p>MoMo sẽ đọc một câu. Bà Ngoại chọn đúng nghĩa nhé!</p>
         <button class="big-audio" id="quizPlay">🔊 Nghe câu này</button>
         <div id="quizOptions"></div>
-        <div id="quizFeedback" class="feedback hidden"></div>
+        <div id="quizFeedback" class="feedback hidden" aria-live="polite"></div>
+        <div id="quizActions" class="listen-result-actions hidden">
+          <button id="quizReplay" class="secondary-action">🔁 Nghe lại câu này</button>
+          <button id="quizNext" class="primary-action">Câu tiếp theo →</button>
+        </div>
       </div>
     </section>
 

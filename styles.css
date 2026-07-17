@@ -60,7 +60,6 @@ h1{font-size:29px;line-height:1.1;margin:0;letter-spacing:-.8px}h1 span{color:va
 .family-feedback b{display:block;font-size:18px}
 .family-feedback p{margin:4px 0 0;font-size:14px;line-height:1.4;font-weight:650}
 
-.voice-note{background:#eef7ff;border:1px solid #d7e9fa;color:#52677f;border-radius:17px;padding:10px 13px;margin:-4px 0 12px;font-size:13px;line-height:1.4}
 button:disabled{opacity:.62;cursor:wait;transform:none!important}
 .speak-btn:disabled,.reply-box button:disabled{background:#f2edf6;animation:listeningPulse .75s ease-in-out infinite alternate}
 @keyframes listeningPulse{from{box-shadow:0 0 0 0 rgba(125,73,184,.1)}to{box-shadow:0 0 0 8px rgba(125,73,184,.12)}}
@@ -107,3 +106,106 @@ button:disabled{opacity:.62;cursor:wait;transform:none!important}
  .listen-row-v8 button{display:flex;justify-content:center;align-items:center;gap:6px}
  .listen-row-v8 button b,.listen-row-v8 button small{display:inline}
 }
+
+
+/* ---------- V8.1 Clear Conversation Feedback ---------- */
+.conversation-score-content{width:100%}
+.conversation-score-box{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ margin-top:10px;
+ padding:11px;
+ background:rgba(255,255,255,.76);
+ border-radius:16px;
+}
+.conversation-score-number{
+ min-width:70px;
+ text-align:center;
+ border-right:1px solid #e7d9ef;
+ padding-right:10px;
+}
+.conversation-score-number strong{
+ font-size:34px;
+ color:var(--p);
+ line-height:1;
+}
+.conversation-score-number span{
+ font-weight:900;
+ color:var(--muted);
+}
+.conversation-score-box>div:last-child{flex:1}
+.conversation-score-box small{
+ display:block;
+ color:var(--muted);
+ font-size:11px;
+ margin-bottom:6px;
+}
+.conversation-word-feedback{
+ display:flex;
+ flex-wrap:wrap;
+ gap:5px;
+}
+.conversation-word-feedback span{
+ display:inline-block;
+ border-radius:10px;
+ padding:5px 7px;
+ font-size:11px;
+ font-weight:900;
+}
+.conversation-word-feedback .good{
+ background:#ddf4d8;
+ color:#356a30;
+}
+.conversation-word-feedback .close{
+ background:#fff0bd;
+ color:#735900;
+}
+.conversation-word-feedback .retry{
+ background:#f3e8fb;
+ color:#7a409e;
+}
+@media(max-width:390px){
+ .conversation-score-box{align-items:flex-start}
+ .conversation-score-number{min-width:58px}
+ .conversation-score-number strong{font-size:29px}
+}
+
+
+/* ---------- V8.2 Listening at Grandma's Own Pace ---------- */
+.quiz-option.correct{
+ border-color:#8bc983!important;
+ background:#e6f7e1!important;
+ color:#315f2d;
+}
+.quiz-option.wrong{
+ border-color:#d9b7ee!important;
+ background:#f6ecfb!important;
+ color:#724493;
+}
+.quiz-option.selected{box-shadow:0 0 0 3px rgba(125,73,184,.10)}
+.feedback{
+ margin-top:14px;
+ border-radius:18px;
+ padding:14px 15px;
+ text-align:left;
+ line-height:1.45;
+}
+.feedback b{display:block;font-size:17px;margin-bottom:5px}
+.feedback p{margin:4px 0 5px}
+.feedback small{color:var(--muted)}
+.listen-result-actions{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
+ margin-top:12px;
+}
+.listen-result-actions button{
+ min-height:52px;
+ border-radius:16px;
+ font-weight:900;
+ padding:10px;
+}
+.secondary-action{background:#fff;border:1px solid #d9c7e9;color:var(--p)}
+.primary-action{background:var(--p);border:none;color:#fff}
+@media(max-width:390px){.listen-result-actions{grid-template-columns:1fr}}
