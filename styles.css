@@ -52,3 +52,10 @@ h1{font-size:29px;line-height:1.1;margin:0;letter-spacing:-.8px}h1 span{color:va
 .final-card{background:linear-gradient(180deg,#fff,#f5e9ff);max-height:92vh;overflow:auto}.confetti{font-size:28px}.final-family{display:flex;justify-content:center;align-items:flex-end}.final-family img{width:145px;height:145px;object-fit:contain;animation:party .8s ease-in-out infinite alternate}@keyframes party{to{transform:translateY(-9px) rotate(3deg)}}.final-card h2{font-size:27px;color:var(--p);margin:8px 0}.final-card>p{font-size:21px;font-weight:900}.final-message{background:white;border-radius:20px;padding:16px;line-height:1.7;margin:15px 0}
 .update-banner{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:30;background:#372445;color:white;border-radius:18px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow)}.update-banner button{border:0;background:#fff;color:var(--p);border-radius:12px;padding:9px;font-weight:800}
 @media(max-width:360px){h1{font-size:24px}.welcome-card{grid-template-columns:72px 1fr 72px}.avatar{width:76px;height:76px}.menu button{min-height:128px}.lesson-card h2{font-size:32px}.lesson-grid{grid-template-columns:1fr}.conversation-card .chat-line img{width:78px;height:78px}}
+
+.family-feedback{padding:12px 14px;border-radius:22px;margin-top:14px;background:linear-gradient(135deg,#fff5cc,#fff0d8);color:#7b5417;font-weight:800;display:flex;gap:12px;align-items:center;text-align:left;border:1px solid #f4dfa5}
+.family-feedback.try{background:linear-gradient(135deg,#f4ecff,#fff4fa);color:#70409f;border-color:#dfcaef}
+.family-feedback img{width:82px;height:82px;object-fit:contain;flex:0 0 auto}
+.family-feedback small{display:block;color:#8b63ad;font-size:13px;margin-bottom:4px}
+.family-feedback b{display:block;font-size:18px}
+.family-feedback p{margin:4px 0 0;font-size:14px;line-height:1.4;font-weight:650}

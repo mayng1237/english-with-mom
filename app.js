@@ -13,21 +13,32 @@ const state={
 };
 let activeDay=state.day, idx=state.sentence, quizIdx=0, conversationIdx=0, recorder=null, chunks=[], waitingWorker=null;
 
-const happyMinmin=["minmin-v2/minmin-v2-02.png","minmin-v2/minmin-v2-07.png","minmin-v2/minmin-v2-09.png","minmin-v2/minmin-v2-14.png","minmin-v2/minmin-v2-16.png"];
+const happyMinmin=[
+"minmin-clean/minmin-happy-01.png","minmin-clean/minmin-happy-02.png",
+"minmin-clean/minmin-happy-03.png","minmin-clean/minmin-happy-04.png",
+"minmin-clean/minmin-happy-05.png","minmin-clean/minmin-happy-06.png",
+"minmin-clean/minmin-happy-07.png","minmin-clean/minmin-happy-08.png",
+"minmin-clean/minmin-happy-09.png","minmin-clean/minmin-happy-10.png",
+"minmin-clean/minmin-happy-11.png","minmin-clean/minmin-happy-12.png",
+"minmin-clean/minmin-happy-13.png","minmin-clean/minmin-happy-14.png",
+"minmin-clean/minmin-happy-15.png"
+];
 const happyMomo=["momo/momo-02.png","momo/momo-08.png","momo/momo-12.png","momo/momo-14.png","momo/momo-16.png"];
 const praise=[
- {img:"minmin-v2/minmin-v2-02.png",vi:"Giỏi quá, Bà Ngoại!",en:"Great job, Grandma!"},
- {img:"momo/momo-02.png",vi:"Tuyệt lắm!",en:"Excellent!"},
- {img:"minmin-v2/minmin-v2-14.png",vi:"Bà Ngoại làm được rồi!",en:"You did it!"},
- {img:"momo/momo-14.png",vi:"Rất tốt!",en:"Very good!"},
- {img:"minmin-v2/minmin-v2-07.png",vi:"Chính xác!",en:"That's right!"},
- {img:"momo/momo-08.png",vi:"Hay lắm!",en:"Awesome!"}
+ {speaker:"MinMin",img:"minmin-clean/minmin-happy-07.png",vi:"Bà Ngoại giỏi quá!",en:"Great job, Grandma!"},
+ {speaker:"MoMo",img:"momo/momo-02.png",vi:"Tuyệt quá! Bà Ngoại nói tốt lắm!",en:"Excellent, Grandma!"},
+ {speaker:"MinMin",img:"minmin-clean/minmin-happy-08.png",vi:"MinMin nghe rõ rồi! Chính xác đó Ngoại!",en:"I heard you clearly. That's right!"},
+ {speaker:"MoMo",img:"momo/momo-14.png",vi:"MoMo tự hào về Bà Ngoại!",en:"I'm proud of you, Grandma!"},
+ {speaker:"MinMin",img:"minmin-clean/minmin-happy-10.png",vi:"Hay lắm Ngoại ơi! Mình học tiếp nha!",en:"Awesome! Let's keep going!"},
+ {speaker:"MoMo",img:"momo/momo-08.png",vi:"Yay! Thêm một câu nữa rồi!",en:"Yay! One more sentence!"}
 ];
 const gentle=[
- {img:"minmin-v2/minmin-v2-10.png",vi:"Mình cùng thử lại nhé!",en:"Let's try together!"},
- {img:"momo/momo-01.png",vi:"Chậm một chút cũng tốt.",en:"Slow is okay."},
- {img:"minmin-v2/minmin-v2-04.png",vi:"MinMin ở đây cùng Ngoại!",en:"MinMin is here with you!"},
- {img:"momo/momo-18.png",vi:"Bà Ngoại cứ từ từ nhé.",en:"Take your time."}
+ {speaker:"MinMin",img:"minmin-clean/minmin-happy-02.png",vi:"Không sao đâu Ngoại. MinMin nghe lại cùng Ngoại nha!",en:"It's okay, Grandma. Let's try together!"},
+ {speaker:"MoMo",img:"momo/momo-12.png",vi:"MoMo nghe gần đúng rồi đó! Ngoại thử thêm lần nữa nha!",en:"That was close! One more time, Grandma!"},
+ {speaker:"MinMin",img:"minmin-clean/minmin-happy-12.png",vi:"MinMin ở đây với Ngoại nè. Mình nói chậm thôi nha!",en:"I'm here with you. Let's say it slowly!"},
+ {speaker:"MoMo",img:"momo/momo-08.png",vi:"Ngoại cứ từ từ nha. MoMo đang lắng nghe!",en:"Take your time. I'm listening!"},
+ {speaker:"MinMin",img:"minmin-clean/minmin-happy-06.png",vi:"Ngoại nói gần điện thoại hơn một chút nha!",en:"Please speak a little closer to the phone!"},
+ {speaker:"MoMo",img:"momo/momo-14.png",vi:"Mình nghe lại một lần rồi thử tiếp nha Ngoại!",en:"Let's listen once more and try again!"}
 ];
 const helpPhrases=[
  ["📞","Please call my family.","Xin hãy gọi cho gia đình tôi."],
@@ -38,13 +49,13 @@ const helpPhrases=[
  ["🧳","My luggage is missing.","Hành lý của tôi bị thất lạc."]
 ];
 const conversations=[
- {who:"MinMin",avatar:"minmin-v2/minmin-v2-02.png",prompt:"Hello, Grandma!",promptVi:"Con chào Bà Ngoại!",reply:"Hello, MinMin!",replyVi:"Chào MinMin!"},
+ {who:"MinMin",avatar:"minmin-clean/minmin-happy-01.png",prompt:"Hello, Grandma!",promptVi:"Con chào Bà Ngoại!",reply:"Hello, MinMin!",replyVi:"Chào MinMin!"},
  {who:"MoMo",avatar:"momo/momo-02.png",prompt:"How are you, Grandma?",promptVi:"Bà Ngoại khỏe không?",reply:"I'm good, thank you.",replyVi:"Bà khỏe, cảm ơn con."},
- {who:"MinMin",avatar:"minmin-v2/minmin-v2-14.png",prompt:"Do you want to play?",promptVi:"Bà Ngoại muốn chơi không?",reply:"Yes, let's play!",replyVi:"Có, mình cùng chơi nhé!"},
+ {who:"MinMin",avatar:"minmin-clean/minmin-happy-06.png",prompt:"Do you want to play?",promptVi:"Bà Ngoại muốn chơi không?",reply:"Yes, let's play!",replyVi:"Có, mình cùng chơi nhé!"},
  {who:"MoMo",avatar:"momo/momo-14.png",prompt:"Are you hungry?",promptVi:"Bà Ngoại có đói không?",reply:"Yes, I am hungry.",replyVi:"Có, Bà Ngoại đói."},
- {who:"MinMin",avatar:"minmin-v2/minmin-v2-09.png",prompt:"I love you, Grandma!",promptVi:"Con yêu Bà Ngoại!",reply:"I love you too!",replyVi:"Bà cũng yêu con!"},
+ {who:"MinMin",avatar:"minmin-clean/minmin-happy-04.png",prompt:"I love you, Grandma!",promptVi:"Con yêu Bà Ngoại!",reply:"I love you too!",replyVi:"Bà cũng yêu con!"},
  {who:"MoMo",avatar:"momo/momo-08.png",prompt:"Let's take a photo!",promptVi:"Mình chụp hình nhé!",reply:"Okay, smile!",replyVi:"Được rồi, cười nào!"},
- {who:"MinMin",avatar:"minmin-v2/minmin-v2-16.png",prompt:"Tell me a story, Grandma.",promptVi:"Bà Ngoại kể chuyện cho con nhé.",reply:"Okay, come sit with me.",replyVi:"Được, con lại ngồi với Bà nhé."},
+ {who:"MinMin",avatar:"minmin-clean/minmin-happy-07.png",prompt:"Tell me a story, Grandma.",promptVi:"Bà Ngoại kể chuyện cho con nhé.",reply:"Okay, come sit with me.",replyVi:"Được, con lại ngồi với Bà nhé."},
  {who:"MoMo",avatar:"momo/momo-16.png",prompt:"Good night, Grandma!",promptVi:"Chúc Bà Ngoại ngủ ngon!",reply:"Good night, sweetheart.",replyVi:"Chúc con yêu ngủ ngon."}
 ];
 
@@ -109,7 +120,12 @@ function renderLesson(){
  $("#recordedAudio").classList.add("hidden");$("#recordStatus").textContent="Nghe lại giọng của mình";
 }
 function showFeedback(ok,item=null){
- const s=item||pick(ok?praise:gentle);$("#feedbackSticker").src=`assets/stickers/${s.img}`;$("#feedbackVi").textContent=s.vi;$("#feedbackEn").textContent=s.en;$("#feedback").className=ok?"feedback":"feedback try";
+ const s=item||pick(ok?praise:gentle);
+ $("#feedbackSticker").src=`assets/stickers/${s.img}`;
+ $("#feedbackSpeaker").textContent=`${s.speaker} nói:`;
+ $("#feedbackVi").textContent=s.vi;
+ $("#feedbackEn").textContent=s.en;
+ $("#feedback").className=ok?"family-feedback":"family-feedback try";
 }
 function showCelebration(item){$("#celebrationImage").src=`assets/stickers/${item.img}`;$("#celebrationVi").textContent=item.vi;$("#celebrationEn").textContent=item.en;$("#celebration").classList.remove("hidden")}
 function recognize(target,callback){
@@ -169,11 +185,27 @@ function renderTopics(){
  }).join("");
 }
 function renderConversation(){
- const c=conversations[conversationIdx];$("#conversationAvatar").src=`assets/stickers/${c.avatar}`;$("#conversationSpeaker").textContent=`${c.who} nói:`;$("#conversationPrompt").textContent=c.prompt;$("#conversationPromptVi").textContent=c.promptVi;$("#conversationReply").textContent=c.reply;$("#conversationReplyVi").textContent=c.replyVi;$("#conversationFeedback").className="feedback hidden";
+ const c=conversations[conversationIdx];$("#conversationAvatar").src=`assets/stickers/${c.avatar}`;$("#conversationSpeaker").textContent=`${c.who} nói:`;$("#conversationPrompt").textContent=c.prompt;$("#conversationPromptVi").textContent=c.promptVi;$("#conversationReply").textContent=c.reply;$("#conversationReplyVi").textContent=c.replyVi;$("#conversationFeedback").className="family-feedback hidden";
  setTimeout(()=>speak(c.prompt,.82),300);
 }
 function conversationSpeak(){
- const c=conversations[conversationIdx];recognize(c.reply,(ok)=>{$("#conversationFeedback").className=ok?"feedback":"feedback try";$("#conversationFeedback").innerHTML=ok?"🌷 <b>Tuyệt lắm, Bà Ngoại!</b>":"💜 <b>Không sao. Mình nghe rồi thử lại nhé!</b>"});
+ const c=conversations[conversationIdx];
+ recognize(c.reply,(ok)=>{
+   const coach=c.who==="MinMin"?"MoMo":"MinMin";
+   const avatar=coach==="MinMin"?pick(happyMinmin):pick(happyMomo);
+   const msg=ok
+     ? (coach==="MinMin"
+        ? {main:"Tuyệt quá, Bà Ngoại!",sub:"MinMin nghe Ngoại nói rất rõ! 💜"}
+        : {main:"Giỏi quá Ngoại ơi!",sub:"MoMo nghe thấy rồi! Mình nói câu tiếp theo nha! 🌷"})
+     : (coach==="MinMin"
+        ? {main:"Không sao đâu Ngoại.",sub:"MinMin nghe lại cùng Ngoại rồi mình thử thêm lần nữa nha! 💜"}
+        : {main:"Gần đúng rồi đó Ngoại!",sub:"MoMo đang lắng nghe. Ngoại nói chậm thêm một chút nha! 🌷"});
+   $("#conversationFeedbackAvatar").src=`assets/stickers/${avatar}`;
+   $("#conversationFeedbackSpeaker").textContent=`${coach} nói:`;
+   $("#conversationFeedbackMain").textContent=msg.main;
+   $("#conversationFeedbackSub").textContent=msg.sub;
+   $("#conversationFeedback").className=ok?"family-feedback":"family-feedback try";
+ });
 }
 function renderHelp(){$("#helpList").innerHTML=helpPhrases.map((p,i)=>`<button class="list-item" data-help="${i}"><span class="icon">${p[0]}</span><span><b>${p[1]}</b><small>${p[2]}</small></span><span class="help-play">🔊</span></button>`).join("")}
 function renderQuiz(){

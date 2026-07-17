@@ -99,9 +99,13 @@
         </button>
         <audio id="recordedAudio" controls class="hidden"></audio>
 
-        <div id="feedback" class="feedback hidden">
+        <div id="feedback" class="family-feedback hidden">
           <img id="feedbackSticker" alt="">
-          <div><b id="feedbackVi"></b><small id="feedbackEn"></small></div>
+          <div>
+            <small id="feedbackSpeaker"></small>
+            <b id="feedbackVi"></b>
+            <p id="feedbackEn"></p>
+          </div>
         </div>
       </div>
 
@@ -123,7 +127,14 @@
           <button id="conversationListen">🔊 Nghe câu trả lời</button>
           <button id="conversationSpeak">🎙️ Bà Ngoại nói</button>
         </div>
-        <div id="conversationFeedback" class="feedback hidden"></div>
+        <div id="conversationFeedback" class="family-feedback hidden">
+          <img id="conversationFeedbackAvatar" alt="">
+          <div>
+            <small id="conversationFeedbackSpeaker"></small>
+            <b id="conversationFeedbackMain"></b>
+            <p id="conversationFeedbackSub"></p>
+          </div>
+        </div>
         <button class="next-btn" id="conversationNext">Cuộc trò chuyện tiếp theo →</button>
       </div>
     </section>

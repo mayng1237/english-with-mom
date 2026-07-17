@@ -1,18 +1,9 @@
-# 🌷 English with Grandma V5 — Family Companion
+# 🌷 English with Grandma V6 — Positive Family Voice
 
-**Học tiếng Anh cùng Ngoại, mỗi ngày một chút.**
+- Bộ MinMin mới gồm 15 sticker vui, không chữ.
+- Không sử dụng sticker khóc, buồn, giận, quạu hoặc phụng phịu.
+- Mọi lời khen và động viên đều hiển thị rõ `MinMin nói:` hoặc `MoMo nói:`.
+- Trong hội thoại, hai cháu thay phiên khen và động viên Ngoại.
+- Service Worker đã đổi sang V6 để iPhone nhận bản cập nhật.
 
-## Tính năng V5
-- 1.000 câu, 100 bài, mỗi bài 10 câu
-- Tiếp tục đúng câu đang học, không nhảy theo ngày lịch
-- Lời chào thay đổi theo giờ và thời gian Ngoại quay lại
-- Chế độ hội thoại với MinMin và MoMo
-- Thu âm và nghe lại giọng của Ngoại
-- Lưu câu yêu thích để ôn nhanh
-- Chọn và ôn lại bất kỳ bài nào
-- Khu vườn phát triển qua các mốc 100–1.000 câu
-- Màn chúc mừng đặc biệt khi hoàn thành 1.000 câu
-- Thông báo “Có phiên bản mới” để cập nhật PWA ngay trong app
-
-## Update GitHub
-Giải nén ZIP và upload/ghi đè toàn bộ file trong repository. Giữ nguyên thư mục `assets` và `data`.
+Giải nén ZIP rồi upload/ghi đè toàn bộ file lên GitHub.
