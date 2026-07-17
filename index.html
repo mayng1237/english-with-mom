@@ -19,60 +19,69 @@
       <div class="brand">🌷 English with Grandma</div>
       <h1>Học tiếng Anh cùng Ngoại,<br><span>mỗi ngày một chút.</span></h1>
     </div>
-    <button class="flower-pill" id="gardenShortcut">🪻 <span id="flowerCount">0</span></button>
+    <button class="flower-pill" id="gardenShortcut" aria-label="Mở vườn của Ngoại">🪻 <span id="flowerCount">0</span></button>
   </header>
 
   <main>
     <section class="screen active" id="home">
       <div class="welcome-card">
-        <img src="assets/stickers/minmin-v2/minmin-v2-02.png" class="avatar" alt="MinMin sticker">
+        <img id="homeMinmin" src="assets/stickers/minmin-v2/minmin-v2-02.png" class="avatar happy-avatar" alt="MinMin vui vẻ">
         <div class="welcome-copy">
-          <b id="welcomeEnglish">Good morning, Grandma!</b>
-          <p id="welcomeVietnamese">MinMin 🐰 và MoMo 🐷 học cùng Bà Ngoại nhé!</p>
+          <b id="welcomeEnglish">Hello, Grandma!</b>
+          <p id="welcomeVietnamese">MinMin và MoMo đang chờ học cùng Bà Ngoại 💜</p>
         </div>
-        <img src="assets/stickers/momo/momo-02.png" class="avatar" alt="MoMo sticker">
+        <img id="homeMomo" src="assets/stickers/momo/momo-02.png" class="avatar happy-avatar" alt="MoMo vui vẻ">
       </div>
 
-      <div class="journey-badges"><span id="dayBadge">Ngày 1 / 100</span><span id="courseBadge">Hành trình 1.000 câu</span></div><button class="hero-btn" id="startToday">
+      <div class="journey-badges">
+        <span id="dayBadge">Bài 1 / 100</span>
+        <span id="courseBadge">Hành trình 1.000 câu</span>
+      </div>
+
+      <button class="hero-btn" id="startToday">
         <span class="play">▶</span>
-        <span><b>Học bài hôm nay</b><small>10 câu • khoảng 10 phút</small></span>
+        <span><b id="startTitle">Bắt đầu bài học</b><small id="startSubtitle">10 câu • khoảng 10 phút</small></span>
       </button>
 
       <div class="progress-card">
-        <div><small>Hôm nay</small><b id="todayProgress">0 / 10 câu</b></div>
+        <div><small>Đã hoàn thành</small><b id="totalProgress">0 / 1.000 câu</b></div>
         <div class="flower-progress" id="flowerProgress"></div>
-        <div class="streak">🔥 <b id="streakCount">0</b><small>ngày</small></div>
+        <div class="streak">🔥 <b id="streakCount">0</b><small>buổi</small></div>
       </div>
 
-      <div class="daily-note" id="dailyNote">
+      <div class="daily-note">
         <span>💌</span>
-        <div><b>Lời nhắn hôm nay</b><p id="dailyMessage">Mỗi câu Ngoại học là một bước gần MinMin và MoMo hơn. 💜</p></div>
+        <div><b id="noteTitle">Lời nhắn hôm nay</b><p id="dailyMessage">Mỗi câu Ngoại học là một bước gần MinMin và MoMo hơn. 💜</p></div>
       </div>
 
       <div class="menu">
-        <button data-go="topics"><span>✈️</span><b>Đi Mỹ cùng Ngoại</b><small>Sân bay, nhập cảnh, gia đình</small></button>
+        <button data-go="conversation"><span>💬</span><b>Nói với hai cháu</b><small>Hội thoại cùng MinMin & MoMo</small></button>
+        <button data-go="favorites"><span>⭐</span><b>Câu Ngoại yêu thích</b><small id="favoriteCountHome">Chưa lưu câu nào</small></button>
         <button data-go="listen"><span>👂</span><b>Nghe và chọn</b><small>Không cần gõ chữ</small></button>
+        <button data-go="garden"><span>🌷</span><b>Vườn của Ngoại</b><small>Khu vườn lớn dần theo tiến độ</small></button>
+        <button data-go="topics"><span>📚</span><b>Chọn bài học</b><small>Ôn lại bất cứ bài nào</small></button>
         <button data-go="help"><span>🆘</span><b>Ngoại cần giúp</b><small>Phát câu khẩn cấp</small></button>
-        <button data-go="garden"><span>🌷</span><b>Vườn của Ngoại</b><small>Học xong sẽ nở hoa</small></button>
       </div>
 
       <button class="install-card" id="installHelp">
         <span>📱</span>
-        <span><b>Cài lên màn hình iPhone</b><small>Mở Safari → Chia sẻ → Thêm vào Màn hình chính</small></span>
+        <span><b>Cài lên màn hình iPhone</b><small>Safari → Chia sẻ → Thêm vào Màn hình chính</small></span>
       </button>
     </section>
 
     <section class="screen" id="lesson">
       <div class="section-head">
         <button data-go="home">←</button>
-        <div><small>Bài học hôm nay</small><b id="lessonCounter">Câu 1 / 10</b></div>
+        <div><small>Bài học của Ngoại</small><b id="lessonCounter">Bài 1 • Câu 1 / 10</b></div>
         <img id="lessonMascot" src="assets/stickers/minmin-v2/minmin-v2-14.png" alt="" class="tiny-sticker">
       </div>
 
       <div class="lesson-card">
-        <span class="topic-tag" id="lessonTopic">CHÀO HỎI</span>
+        <div class="lesson-topline">
+          <span class="topic-tag" id="lessonTopic">CHÀO HỎI</span>
+          <button class="favorite-btn" id="favoriteBtn" aria-label="Lưu câu yêu thích">☆</button>
+        </div>
         <h2 id="lessonEn">Hello!</h2>
-        <p class="pronounce" id="lessonPron">hờ-lôu</p>
         <p class="meaning" id="lessonVi">Xin chào!</p>
 
         <div class="listen-row">
@@ -85,6 +94,11 @@
           <span><b>Bà Ngoại nói thử</b><small id="speakStatus">Bấm vào rồi nói theo</small></span>
         </button>
 
+        <button class="record-btn" id="recordBtn">
+          ⏺️ <span><b>Thu âm giọng Ngoại</b><small id="recordStatus">Nghe lại giọng của mình</small></span>
+        </button>
+        <audio id="recordedAudio" controls class="hidden"></audio>
+
         <div id="feedback" class="feedback hidden">
           <img id="feedbackSticker" alt="">
           <div><b id="feedbackVi"></b><small id="feedbackEn"></small></div>
@@ -95,15 +109,40 @@
       <button class="next-btn" id="nextBtn">Câu tiếp theo →</button>
     </section>
 
+    <section class="screen" id="conversation">
+      <div class="section-head"><button data-go="home">←</button><div><small>Học cùng gia đình</small><b>Nói với MinMin & MoMo</b></div><span>💬💜</span></div>
+      <div class="conversation-card">
+        <div class="chat-line left">
+          <img id="conversationAvatar" src="assets/stickers/minmin-v2/minmin-v2-02.png" alt="">
+          <div class="bubble"><small id="conversationSpeaker">MinMin nói:</small><b id="conversationPrompt">Hello, Grandma!</b><p id="conversationPromptVi">Con chào Bà Ngoại!</p></div>
+        </div>
+        <div class="reply-box">
+          <small>Bà Ngoại trả lời:</small>
+          <h2 id="conversationReply">Hello, MinMin!</h2>
+          <p id="conversationReplyVi">Chào MinMin!</p>
+          <button id="conversationListen">🔊 Nghe câu trả lời</button>
+          <button id="conversationSpeak">🎙️ Bà Ngoại nói</button>
+        </div>
+        <div id="conversationFeedback" class="feedback hidden"></div>
+        <button class="next-btn" id="conversationNext">Cuộc trò chuyện tiếp theo →</button>
+      </div>
+    </section>
+
+    <section class="screen" id="favorites">
+      <div class="section-head"><button data-go="home">←</button><div><small>Ôn nhanh</small><b>Câu Ngoại yêu thích</b></div><span>⭐💜</span></div>
+      <div class="help-note">Bấm 🔊 để nghe. Bấm ★ để bỏ khỏi danh sách yêu thích.</div>
+      <div id="favoritesList" class="list"></div>
+    </section>
+
     <section class="screen" id="topics">
-      <div class="section-head"><button data-go="home">←</button><div><small>Chủ đề</small><b>Đi Mỹ cùng Ngoại</b></div><span>✈️💜</span></div>
-      <div id="topicsList" class="list"></div>
+      <div class="section-head"><button data-go="home">←</button><div><small>100 bài học</small><b>Chọn bài để học hoặc ôn</b></div><span>📚🌷</span></div>
+      <div id="topicsList" class="lesson-grid"></div>
     </section>
 
     <section class="screen" id="listen">
       <div class="section-head"><button data-go="home">←</button><div><small>Luyện nghe</small><b>Nghe và chọn</b></div><img src="assets/stickers/momo/momo-14.png" class="tiny-sticker" alt=""></div>
       <div class="quiz-card">
-        <img src="assets/stickers/momo/momo-02.png" class="quiz-mascot" alt="MoMo sticker">
+        <img src="assets/stickers/momo/momo-02.png" class="quiz-mascot" alt="MoMo vui vẻ">
         <p>MoMo sẽ đọc một câu. Bà Ngoại chọn đúng nghĩa nhé!</p>
         <button class="big-audio" id="quizPlay">🔊 Nghe câu này</button>
         <div id="quizOptions"></div>
@@ -119,13 +158,14 @@
 
     <section class="screen" id="garden">
       <div class="section-head"><button data-go="home">←</button><div><small>Phần thưởng</small><b>Grandma's Purple Garden</b></div><span>🪻🦋</span></div>
-      <div class="garden">
-        <div class="sky">☁️　🐝　🦋　☁️</div>
-        <div id="flowers"></div>
-        <div class="ground">🌿🌿🌿🌿🌿🌿🌿</div>
+      <div class="garden-stage" id="gardenStage">
+        <div class="garden-sky" id="gardenSky">☁️　☀️　☁️</div>
+        <div class="garden-world" id="gardenWorld"></div>
+        <div class="garden-ground">🌿🌿🌿🌿🌿🌿🌿🌿</div>
         <h3 id="gardenTitle">Học xong một bài để hoa nở nhé!</h3>
-        <p>MinMin và MoMo đang đợi Bà Ngoại 💜</p>
+        <p id="gardenSubtitle">MinMin và MoMo đang đợi Bà Ngoại 💜</p>
       </div>
+      <div class="milestones" id="milestones"></div>
       <div class="journal">
         <h3>📖 Nhật ký của Ngoại</h3>
         <div id="journalList"></div>
@@ -141,6 +181,30 @@
     <p id="celebrationEn"></p>
     <button id="celebrationClose">Tiếp tục 💜</button>
   </div>
+</div>
+
+<div id="finalCelebration" class="modal hidden">
+  <div class="final-card">
+    <div class="confetti">🌷 ✨ 💜 🌼 ✨ 🌷</div>
+    <div class="final-family">
+      <img src="assets/stickers/minmin-v2/minmin-v2-14.png" alt="MinMin vui vẻ">
+      <img src="assets/stickers/momo/momo-02.png" alt="MoMo vui vẻ">
+    </div>
+    <h2>Bà Ngoại đã hoàn thành 1.000 câu!</h2>
+    <p>Grandma, you did it!</p>
+    <div class="final-message">
+      Bà Ngoại ơi,<br>
+      cảm ơn Ngoại đã kiên trì học tiếng Anh.<br>
+      MinMin và MoMo rất tự hào về Ngoại.<br>
+      Chúng con yêu Ngoại thật nhiều! 💜
+    </div>
+    <button id="finalClose">Xem khu vườn của Ngoại 🌷</button>
+  </div>
+</div>
+
+<div id="updateBanner" class="update-banner hidden">
+  <span>🌷 Có phiên bản mới!</span>
+  <button id="updateNow">Cập nhật ngay</button>
 </div>
 
 <script src="app.js"></script>

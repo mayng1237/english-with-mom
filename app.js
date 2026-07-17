@@ -1,25 +1,33 @@
+let curriculum=[];
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const state={
+ day:Number(localStorage.getItem("ewgCurrentDay")||1),
+ sentence:Number(localStorage.getItem("ewgSentenceIndex")||0),
+ completed:Number(localStorage.getItem("ewgCompletedSentences")||0),
+ sessions:Number(localStorage.getItem("ewgSessions")||0),
+ favorites:JSON.parse(localStorage.getItem("ewgFavorites")||"[]"),
+ journal:JSON.parse(localStorage.getItem("ewgJournal")||"[]"),
+ lastStudy:localStorage.getItem("ewgLastStudy")||"",
+ completedDays:JSON.parse(localStorage.getItem("ewgCompletedDays")||"[]")
+};
+let activeDay=state.day, idx=state.sentence, quizIdx=0, conversationIdx=0, recorder=null, chunks=[], waitingWorker=null;
 
-const lessons=[
- {topic:"CHÀO HỎI",en:"Hello!",vi:"Xin chào!",pron:"hờ-lôu"},
- {topic:"CHÀO HỎI",en:"Good morning!",vi:"Chào buổi sáng!",pron:"gụt mo-ni-ng"},
- {topic:"GIA ĐÌNH",en:"I love you, Grandma.",vi:"Con yêu bà ngoại.",pron:"ai lâv diu, gran-ma"},
- {topic:"GIA ĐÌNH",en:"I am happy to see you.",vi:"Tôi rất vui được gặp bạn.",pron:"ai em he-pi tờ xi diu"},
- {topic:"SÂN BAY",en:"Where is my gate?",vi:"Cổng ra máy bay của tôi ở đâu?",pron:"que-rờ iz mai gâyt"},
- {topic:"SÂN BAY",en:"Where is my luggage?",vi:"Hành lý của tôi ở đâu?",pron:"que-rờ iz mai lâ-gịt"},
- {topic:"NHẬP CẢNH",en:"I am visiting my family.",vi:"Tôi sang thăm gia đình.",pron:"ai em vi-zi-ting mai fa-mi-li"},
- {topic:"NHẬP CẢNH",en:"I will stay for two weeks.",vi:"Tôi sẽ ở lại hai tuần.",pron:"ai wil stây pho tu quíks"},
- {topic:"XIN GIÚP ĐỠ",en:"Please speak slowly.",vi:"Xin hãy nói chậm.",pron:"pli-z spi-k s-lâu-li"},
- {topic:"XIN GIÚP ĐỠ",en:"Please call my family.",vi:"Xin hãy gọi cho gia đình tôi.",pron:"pli-z co-l mai fa-mi-li"}
+const happyMinmin=["minmin-v2/minmin-v2-02.png","minmin-v2/minmin-v2-07.png","minmin-v2/minmin-v2-09.png","minmin-v2/minmin-v2-14.png","minmin-v2/minmin-v2-16.png"];
+const happyMomo=["momo/momo-02.png","momo/momo-08.png","momo/momo-12.png","momo/momo-14.png","momo/momo-16.png"];
+const praise=[
+ {img:"minmin-v2/minmin-v2-02.png",vi:"Giỏi quá, Bà Ngoại!",en:"Great job, Grandma!"},
+ {img:"momo/momo-02.png",vi:"Tuyệt lắm!",en:"Excellent!"},
+ {img:"minmin-v2/minmin-v2-14.png",vi:"Bà Ngoại làm được rồi!",en:"You did it!"},
+ {img:"momo/momo-14.png",vi:"Rất tốt!",en:"Very good!"},
+ {img:"minmin-v2/minmin-v2-07.png",vi:"Chính xác!",en:"That's right!"},
+ {img:"momo/momo-08.png",vi:"Hay lắm!",en:"Awesome!"}
 ];
-const topics=[
- ["👋","Chào hỏi","Hello, Good morning"],
- ["✈️","Ở sân bay","Hộ chiếu, cổng bay, hành lý"],
- ["🛂","Nhập cảnh Mỹ","Thăm gia đình, thời gian lưu trú"],
- ["👧🏻","Nói với MinMin & MoMo","Ăn, chơi, ngủ, yêu thương"],
- ["🛒","Đi siêu thị","Hỏi giá và mua đồ"],
- ["🍽️","Nhà hàng","Gọi món và xin nước"],
- ["🏥","Sức khỏe","Nói mình không khỏe"],
- ["🆘","Khẩn cấp","Bị lạc và gọi gia đình"]
+const gentle=[
+ {img:"minmin-v2/minmin-v2-10.png",vi:"Mình cùng thử lại nhé!",en:"Let's try together!"},
+ {img:"momo/momo-01.png",vi:"Chậm một chút cũng tốt.",en:"Slow is okay."},
+ {img:"minmin-v2/minmin-v2-04.png",vi:"MinMin ở đây cùng Ngoại!",en:"MinMin is here with you!"},
+ {img:"momo/momo-18.png",vi:"Bà Ngoại cứ từ từ nhé.",en:"Take your time."}
 ];
 const helpPhrases=[
  ["📞","Please call my family.","Xin hãy gọi cho gia đình tôi."],
@@ -29,142 +37,191 @@ const helpPhrases=[
  ["🏥","I need a doctor.","Tôi cần bác sĩ."],
  ["🧳","My luggage is missing.","Hành lý của tôi bị thất lạc."]
 ];
-const praise=[
- {img:"minmin-v2/minmin-v2-02.png",vi:"Giỏi quá, Bà Ngoại!",en:"Great job, Grandma!"},
- {img:"momo/momo-02.png",vi:"Tuyệt lắm!",en:"Excellent!"},
- {img:"minmin-v2/minmin-v2-12.png",vi:"Bà Ngoại làm được rồi!",en:"You did it!"},
- {img:"momo/momo-14.png",vi:"Rất tốt!",en:"Very good!"},
- {img:"minmin-v2/minmin-v2-07.png",vi:"Chính xác!",en:"That's right!"},
- {img:"momo/momo-08.png",vi:"Hay lắm!",en:"Awesome!"},
- {img:"minmin-v2/minmin-v2-08.png",vi:"Bà Ngoại tiến bộ rồi đó!",en:"You're improving!"},
- {img:"momo/momo-15.png",vi:"MinMin và MoMo tự hào về Ngoại!",en:"We're proud of you, Grandma!"},
- {img:"minmin-v2/minmin-v2-09.png",vi:"Vỗ tay cho Bà Ngoại!",en:"Clap clap for Grandma!"},
- {img:"momo/momo-12.png",vi:"Bà Ngoại phát âm hay hơn rồi!",en:"Your pronunciation is better!"},
- {img:"minmin-v2/minmin-v2-14.png",vi:"Quá tuyệt luôn!",en:"Fantastic!"},
- {img:"momo/momo-03.png",vi:"Thêm một câu nữa nhé!",en:"One more sentence!"},
- {img:"minmin-v2/minmin-v2-03.png",vi:"Cố lên nào!",en:"Keep going!"},
- {img:"momo/momo-16.png",vi:"Bà Ngoại đang làm rất tốt!",en:"You're doing great!"},
- {img:"minmin-v2/minmin-v2-16.png",vi:"Bà Ngoại là siêu sao!",en:"You're a superstar!"}
+const conversations=[
+ {who:"MinMin",avatar:"minmin-v2/minmin-v2-02.png",prompt:"Hello, Grandma!",promptVi:"Con chào Bà Ngoại!",reply:"Hello, MinMin!",replyVi:"Chào MinMin!"},
+ {who:"MoMo",avatar:"momo/momo-02.png",prompt:"How are you, Grandma?",promptVi:"Bà Ngoại khỏe không?",reply:"I'm good, thank you.",replyVi:"Bà khỏe, cảm ơn con."},
+ {who:"MinMin",avatar:"minmin-v2/minmin-v2-14.png",prompt:"Do you want to play?",promptVi:"Bà Ngoại muốn chơi không?",reply:"Yes, let's play!",replyVi:"Có, mình cùng chơi nhé!"},
+ {who:"MoMo",avatar:"momo/momo-14.png",prompt:"Are you hungry?",promptVi:"Bà Ngoại có đói không?",reply:"Yes, I am hungry.",replyVi:"Có, Bà Ngoại đói."},
+ {who:"MinMin",avatar:"minmin-v2/minmin-v2-09.png",prompt:"I love you, Grandma!",promptVi:"Con yêu Bà Ngoại!",reply:"I love you too!",replyVi:"Bà cũng yêu con!"},
+ {who:"MoMo",avatar:"momo/momo-08.png",prompt:"Let's take a photo!",promptVi:"Mình chụp hình nhé!",reply:"Okay, smile!",replyVi:"Được rồi, cười nào!"},
+ {who:"MinMin",avatar:"minmin-v2/minmin-v2-16.png",prompt:"Tell me a story, Grandma.",promptVi:"Bà Ngoại kể chuyện cho con nhé.",reply:"Okay, come sit with me.",replyVi:"Được, con lại ngồi với Bà nhé."},
+ {who:"MoMo",avatar:"momo/momo-16.png",prompt:"Good night, Grandma!",promptVi:"Chúc Bà Ngoại ngủ ngon!",reply:"Good night, sweetheart.",replyVi:"Chúc con yêu ngủ ngon."}
 ];
-const gentle=[
- {img:"momo/momo-05.png",vi:"Không sao đâu, Bà Ngoại.",en:"It's okay, Grandma."},
- {img:"minmin-v2/minmin-v2-15.png",vi:"Mình thử lại nhé!",en:"Let's try again!"},
- {img:"momo/momo-20.png",vi:"Chỉ còn một chút nữa thôi!",en:"Almost there!"},
- {img:"minmin-v2/minmin-v2-13.png",vi:"Đừng lo nha!",en:"Don't worry!"},
- {img:"momo/momo-03.png",vi:"Sai một chút cũng được.",en:"It's okay to make mistakes."},
- {img:"minmin-v2/minmin-v2-10.png",vi:"Mình cùng thử lại nhé!",en:"Let's try together!"},
- {img:"momo/momo-01.png",vi:"Chậm một chút cũng tốt.",en:"Slow is okay."},
- {img:"minmin-v2/minmin-v2-05.png",vi:"MoMo đang nghe Bà Ngoại đây.",en:"MoMo is listening, Grandma."},
- {img:"momo/momo-18.png",vi:"Bà Ngoại cứ từ từ nhé.",en:"Take your time."},
- {img:"minmin-v2/minmin-v2-06.png",vi:"Thử thêm một lần nữa nha!",en:"One more time!"},
- {img:"momo/momo-10.png",vi:"Bà Ngoại nói gần điện thoại hơn nhé.",en:"Please speak closer to the phone."},
- {img:"minmin-v2/minmin-v2-04.png",vi:"MinMin ở đây cùng Ngoại!",en:"MinMin is here with you!"},
- {img:"momo/momo-17.png",vi:"Ngoại đừng bỏ cuộc nhé!",en:"Don't give up!"},
- {img:"minmin-v2/minmin-v2-11.png",vi:"Chậm thôi là được.",en:"Slowly is perfect."},
- {img:"momo/momo-19.png",vi:"Ôm Bà Ngoại một cái nè!",en:"A big hug for Grandma!"}
-];
-const welcomeMessages=[
- ["Good morning, Grandma!","MinMin 🐰 và MoMo 🐷 học cùng Bà Ngoại nhé!"],
- ["Ready to learn, Grandma?","Hôm nay mình cùng học 10 câu nha!"],
- ["You can do it, Grandma!","Mỗi ngày một chút là giỏi lắm rồi!"],
- ["We love you, Grandma!","MinMin và MoMo luôn cổ vũ Bà Ngoại 💜"]
-];
-let idx=0,quizIdx=0,welIdx=0;
-let flowers=Number(localStorage.getItem("ewgFlowers")||0);
-let progress=Number(localStorage.getItem("ewgProgress")||0);
-let streak=Number(localStorage.getItem("ewgStreak")||0);
-let journal=JSON.parse(localStorage.getItem("ewgJournal")||"[]");
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const pick=a=>a[Math.floor(Math.random()*a.length)];
 
-function go(id){$$(".screen").forEach(x=>x.classList.remove("active"));$("#"+id).classList.add("active");scrollTo({top:0,behavior:"smooth"});if(id==="garden")renderGarden()}
-function speak(text,rate=.82){if(!speechSynthesis){alert("Thiết bị chưa hỗ trợ đọc giọng.");return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate;u.pitch=1.03;speechSynthesis.speak(u)}
+function save(){
+ localStorage.setItem("ewgCurrentDay",state.day);
+ localStorage.setItem("ewgSentenceIndex",state.sentence);
+ localStorage.setItem("ewgCompletedSentences",state.completed);
+ localStorage.setItem("ewgSessions",state.sessions);
+ localStorage.setItem("ewgFavorites",JSON.stringify(state.favorites));
+ localStorage.setItem("ewgJournal",JSON.stringify(state.journal.slice(-100)));
+ localStorage.setItem("ewgLastStudy",state.lastStudy);
+ localStorage.setItem("ewgCompletedDays",JSON.stringify(state.completedDays));
+}
+function dailyLessons(day=activeDay){return curriculum.filter(x=>x.day===day)}
+function speak(text,rate=.82){if(!("speechSynthesis"in window)){alert("Thiết bị chưa hỗ trợ đọc giọng.");return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate;u.pitch=1.03;speechSynthesis.speak(u)}
 function flowerRow(done,total=10){return Array.from({length:total},(_,i)=>`<span class="flower-dot ${i<done?"done":""}">${i<done?"🌷":"🌱"}</span>`).join("")}
+function go(id){$$(".screen").forEach(x=>x.classList.remove("active"));$("#"+id).classList.add("active");scrollTo({top:0,behavior:"smooth"});if(id==="garden")renderGarden();if(id==="favorites")renderFavorites();if(id==="topics")renderTopics();if(id==="conversation")renderConversation()}
+function daysSince(date){if(!date)return 999;const then=new Date(date+"T00:00:00"),now=new Date();now.setHours(0,0,0,0);return Math.floor((now-then)/86400000)}
+function greeting(){
+ const h=new Date().getHours(), gap=daysSince(state.lastStudy);
+ let en,vi;
+ if(gap>3&&state.completed>0){en="Welcome back, Grandma!";vi="MinMin và MoMo nhớ Bà Ngoại lắm 💜"}
+ else if(h>=5&&h<12){en="Good morning, Grandma! ☀️";vi="Chúc Bà Ngoại một buổi sáng thật vui!"}
+ else if(h>=12&&h<17){en="Good afternoon, Grandma! 🌼";vi="Mình cùng học một chút nhé Bà Ngoại!"}
+ else if(h>=17&&h<23){en="Good evening, Grandma! 🌙";vi="MinMin và MoMo rất vui khi gặp Bà Ngoại!"}
+ else{en="You're still awake, Grandma? 😄";vi="Học một chút rồi Bà Ngoại nghỉ ngơi nhé 💜"}
+ $("#welcomeEnglish").textContent=en;$("#welcomeVietnamese").textContent=vi;
+ $("#homeMinmin").src=`assets/stickers/${pick(happyMinmin)}`;$("#homeMomo").src=`assets/stickers/${pick(happyMomo)}`;
+}
 function renderHome(){
- $("#flowerCount").textContent=flowers;
- $("#todayProgress").textContent=`${Math.min(progress,10)} / 10 câu`;
- $("#flowerProgress").innerHTML=flowerRow(Math.min(progress,10));
- $("#streakCount").textContent=streak;
+ greeting();
+ const lessonDone=activeDay===state.day?state.sentence:0;
+ $("#flowerCount").textContent=state.completed;
+ $("#totalProgress").textContent=`${state.completed.toLocaleString("vi-VN")} / 1.000 câu`;
+ $("#flowerProgress").innerHTML=flowerRow(Math.min(10,lessonDone),10);
+ $("#streakCount").textContent=state.sessions;
+ $("#dayBadge").textContent=`Bài ${state.day} / 100`;
+ const lesson=dailyLessons(state.day)[0];
+ $("#courseBadge").textContent=lesson?lesson.courseName:"Hành trình 1.000 câu";
+ $("#favoriteCountHome").textContent=state.favorites.length?`${state.favorites.length} câu đã lưu`:"Chưa lưu câu nào";
+ if(state.sentence>0&&state.sentence<10){
+   $("#startTitle").textContent="Tiếp tục bài đang học";
+   $("#startSubtitle").textContent=`Bài ${state.day} • tiếp tục từ câu ${state.sentence+1}`;
+   $("#noteTitle").textContent="Ngoại không cần học lại từ đầu";
+   $("#dailyMessage").textContent=`Lần trước Ngoại học đến câu ${state.sentence}. Mình tiếp tục câu ${state.sentence+1} nhé 💜`;
+ }else{
+   $("#startTitle").textContent="Bắt đầu bài học";
+   $("#startSubtitle").textContent="10 câu • khoảng 10 phút";
+   $("#noteTitle").textContent="Lời nhắn hôm nay";
+   $("#dailyMessage").textContent="Mỗi câu Ngoại học là một bước gần MinMin và MoMo hơn. 💜";
+ }
 }
 function renderLesson(){
- const l=lessons[idx];
- $("#lessonCounter").textContent=`Câu ${idx+1} / ${lessons.length}`;
- $("#lessonTopic").textContent=l.topic;$("#lessonEn").textContent=l.en;$("#lessonPron").textContent=l.pron;$("#lessonVi").textContent=l.vi;
- $("#feedback").className="feedback hidden";
+ const lessons=dailyLessons(),l=lessons[idx];if(!l)return;
+ $("#lessonCounter").textContent=`Bài ${activeDay} • Câu ${idx+1} / 10`;
+ $("#lessonTopic").textContent=l.topic;$("#lessonEn").textContent=l.en;$("#lessonVi").textContent=l.vi;
+ $("#feedback").className="feedback hidden";$("#speakStatus").textContent="Bấm vào rồi nói theo";
  $("#lessonFlowers").innerHTML=flowerRow(idx,10);
- $("#nextBtn").textContent=idx===lessons.length-1?"Hoàn thành bài 🌷":"Câu tiếp theo →";
- $("#lessonMascot").src=idx%2?"assets/stickers/momo/momo-12.png":"assets/stickers/minmin-v2/minmin-v2-14.png";
+ $("#nextBtn").textContent=idx===9?"Hoàn thành bài học 🌷":"Câu tiếp theo →";
+ $("#lessonMascot").src=`assets/stickers/${idx%2?pick(happyMomo):pick(happyMinmin)}`;
+ const fav=state.favorites.includes(l.id);$("#favoriteBtn").textContent=fav?"★":"☆";$("#favoriteBtn").classList.toggle("active",fav);
+ $("#recordedAudio").classList.add("hidden");$("#recordStatus").textContent="Nghe lại giọng của mình";
 }
 function showFeedback(ok,item=null){
- const s=item||pick(ok?praise:gentle);
- $("#feedbackSticker").src=`assets/stickers/${s.img}`;
- $("#feedbackVi").textContent=s.vi;$("#feedbackEn").textContent=s.en;
- $("#feedback").className=ok?"feedback":"feedback try";
+ const s=item||pick(ok?praise:gentle);$("#feedbackSticker").src=`assets/stickers/${s.img}`;$("#feedbackVi").textContent=s.vi;$("#feedbackEn").textContent=s.en;$("#feedback").className=ok?"feedback":"feedback try";
 }
-function showCelebration(item){
- $("#celebrationImage").src=`assets/stickers/${item.img}`;
- $("#celebrationVi").textContent=item.vi;$("#celebrationEn").textContent=item.en;
- $("#celebration").classList.remove("hidden");
-}
-function recognize(){
+function showCelebration(item){$("#celebrationImage").src=`assets/stickers/${item.img}`;$("#celebrationVi").textContent=item.vi;$("#celebrationEn").textContent=item.en;$("#celebration").classList.remove("hidden")}
+function recognize(target,callback){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SR){showFeedback(false,{img:"momo/momo-10.png",vi:"Safari chưa hỗ trợ chấm giọng trực tiếp. Bà Ngoại nghe rồi nói theo nhé.",en:"Listen and repeat, Grandma."});return}
- const r=new SR();r.lang="en-US";$("#speakStatus").textContent="Bà Ngoại nói ngay bây giờ nhé...";r.start();
- r.onresult=e=>{
-   const said=e.results[0][0].transcript.toLowerCase();
-   const target=lessons[idx].en.toLowerCase().replace(/[^\w\s']/g,"");
-   const words=target.split(" ");
-   const ok=words.filter(w=>said.includes(w)).length>=Math.max(1,words.length-1);
-   showFeedback(ok);
- };
- r.onerror=()=>showFeedback(false,{img:"momo/momo-10.png",vi:"MoMo chưa nghe rõ. Bà Ngoại nói gần điện thoại hơn nhé.",en:"Please speak closer to the phone, Grandma."});
- r.onend=()=>$("#speakStatus").textContent="Bấm để nói lại";
+ if(!SR){callback(false,"Safari chưa hỗ trợ chấm giọng trực tiếp.");return}
+ const r=new SR();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;r.start();
+ r.onresult=e=>{const said=e.results[0][0].transcript.toLowerCase();const words=target.toLowerCase().replace(/[^\w\s']/g,"").split(/\s+/);const score=words.filter(w=>said.includes(w)).length/words.length;callback(score>=.7,said)};
+ r.onerror=()=>callback(false,"");
 }
-function renderTopics(){$("#topicsList").innerHTML=topics.map((t,i)=>`<button class="list-item" data-topic="${i}"><span class="icon">${t[0]}</span><span><b>${t[1]}</b><small>${t[2]}</small></span><span class="arrow">›</span></button>`).join("")}
-function renderHelp(){$("#helpList").innerHTML=helpPhrases.map((p,i)=>`<button class="list-item" data-help="${i}"><span class="icon">${p[0]}</span><span><b>${p[1]}</b><small>${p[2]}</small></span><span class="help-play">🔊</span></button>`).join("")}
-function renderQuiz(){
- const q=lessons[quizIdx],wrong=lessons[(quizIdx+3)%lessons.length];
- const opts=Math.random()>.5?[q.vi,wrong.vi]:[wrong.vi,q.vi];
- $("#quizOptions").innerHTML=opts.map(x=>`<button class="quiz-option">${x}</button>`).join("");
- $("#quizFeedback").className="feedback hidden";
- $$(".quiz-option").forEach(b=>b.onclick=()=>{
-   const ok=b.textContent===q.vi;
-   $("#quizFeedback").className=ok?"feedback":"feedback try";
-   $("#quizFeedback").textContent=ok?"Đúng rồi, Bà Ngoại! Tuyệt lắm 💜":"Gần đúng rồi. Bà Ngoại nghe lại nhé 🌷";
-   if(ok)setTimeout(()=>{quizIdx=(quizIdx+1)%lessons.length;renderQuiz()},1100)
- });
+function startRecognition(){
+ const target=dailyLessons()[idx].en;$("#speakStatus").textContent="Bà Ngoại nói ngay bây giờ nhé...";
+ recognize(target,(ok)=>{showFeedback(ok);$("#speakStatus").textContent="Bấm để nói lại"});
 }
-function renderGarden(){
- const icons=["🌷","🪻","🌸","🌼","🌺","🦋","🐝"];
- $("#flowers").innerHTML=flowers?Array.from({length:Math.min(flowers,35)},(_,i)=>`<span>${icons[i%icons.length]}</span>`).join(""):"<span style='font-size:72px;opacity:.45'>🌱</span>";
- $("#gardenTitle").textContent=flowers?`Vườn của Ngoại đã có ${flowers} bông hoa!`:"Học xong một bài để hoa nở nhé!";
- $("#journalList").innerHTML=journal.length?journal.slice().reverse().map(j=>`<div class="journal-entry"><b>${j.icon} ${j.date}</b><small>${j.text}</small></div>`).join(""):"<div class='journal-entry'><small>Nhật ký đầu tiên sẽ xuất hiện sau khi Bà Ngoại hoàn thành bài học.</small></div>";
+async function toggleRecord(){
+ if(recorder&&recorder.state==="recording"){recorder.stop();return}
+ if(!navigator.mediaDevices?.getUserMedia){alert("iPhone chưa cho phép thu âm.");return}
+ try{
+   const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+   chunks=[];recorder=new MediaRecorder(stream);
+   recorder.ondataavailable=e=>chunks.push(e.data);
+   recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType});$("#recordedAudio").src=URL.createObjectURL(blob);$("#recordedAudio").classList.remove("hidden");$("#recordStatus").textContent="Bấm nút Play để nghe lại";stream.getTracks().forEach(t=>t.stop())};
+   recorder.start();$("#recordStatus").textContent="Đang thu âm... Bấm lại để dừng";
+ }catch(e){alert("Bà Ngoại hãy cho phép dùng microphone trong Safari nhé.")}
+}
+function toggleFavorite(){
+ const l=dailyLessons()[idx],p=state.favorites.indexOf(l.id);
+ if(p>=0)state.favorites.splice(p,1);else state.favorites.push(l.id);
+ save();renderLesson();renderHome();
 }
 function finishLesson(){
- flowers++;streak=Math.max(1,streak+1);progress=10;
- localStorage.setItem("ewgFlowers",flowers);localStorage.setItem("ewgStreak",streak);localStorage.setItem("ewgProgress",progress);
- const date=new Date().toLocaleDateString("vi-VN");
- journal.push({icon:"🌷",date,text:"Hôm nay Ngoại đã học đủ 10 câu. MinMin và MoMo rất tự hào về Ngoại!"});
- journal=journal.slice(-30);localStorage.setItem("ewgJournal",JSON.stringify(journal));
- renderHome();showCelebration({img:"momo/momo-02.png",vi:"Bà Ngoại hoàn thành 10 câu rồi!",en:"You completed 10 sentences, Grandma!"});
+ if(!state.completedDays.includes(activeDay)){
+   state.completedDays.push(activeDay);state.completed=Math.min(1000,state.completed+10);state.sessions++;
+   state.journal.push({date:new Date().toLocaleDateString("vi-VN"),text:`Ngoại đã hoàn thành Bài ${activeDay}: 10 câu tiếng Anh. MinMin và MoMo rất tự hào!`});
+ }
+ state.lastStudy=new Date().toISOString().slice(0,10);
+ if(activeDay===state.day&&state.day<100){state.day++;state.sentence=0;activeDay=state.day;idx=0}
+ else if(activeDay===100&&state.completed>=1000){state.sentence=10}
+ save();renderHome();
+ if(state.completed>=1000)$("#finalCelebration").classList.remove("hidden");
+ else showCelebration({img:"momo/momo-02.png",vi:`Bà Ngoại hoàn thành Bài ${activeDay===state.day?activeDay-1:activeDay} rồi!`,en:"You completed the lesson, Grandma!"});
+}
+function nextLesson(){
+ if(idx<9){
+   idx++;
+   if(activeDay===state.day){state.sentence=idx;state.lastStudy=new Date().toISOString().slice(0,10);save()}
+   renderLesson();showCelebration(pick(praise));
+ }else finishLesson();
+}
+function renderFavorites(){
+ const list=state.favorites.map(id=>curriculum.find(x=>x.id===id)).filter(Boolean);
+ $("#favoritesList").innerHTML=list.length?list.map(x=>`<div class="list-item"><span class="icon">⭐</span><span><b>${x.en}</b><small>${x.vi}</small></span><button class="help-play" data-fav-play="${x.id}">🔊</button><button class="help-play" data-fav-remove="${x.id}">★</button></div>`).join(""):`<div class="help-note">Ngoại chưa lưu câu nào. Trong bài học, bấm dấu ☆ để lưu câu mình thích.</div>`;
+}
+function renderTopics(){
+ $("#topicsList").innerHTML=Array.from({length:100},(_,i)=>{
+   const d=i+1,l=curriculum.find(x=>x.day===d),done=state.completedDays.includes(d),current=d===state.day;
+   return `<button class="lesson-choice ${done?"done":""} ${current?"current":""}" data-day="${d}"><b>${done?"✓ ":""}Bài ${d}</b><small>${l?.courseName||""}<br>10 câu</small></button>`;
+ }).join("");
+}
+function renderConversation(){
+ const c=conversations[conversationIdx];$("#conversationAvatar").src=`assets/stickers/${c.avatar}`;$("#conversationSpeaker").textContent=`${c.who} nói:`;$("#conversationPrompt").textContent=c.prompt;$("#conversationPromptVi").textContent=c.promptVi;$("#conversationReply").textContent=c.reply;$("#conversationReplyVi").textContent=c.replyVi;$("#conversationFeedback").className="feedback hidden";
+ setTimeout(()=>speak(c.prompt,.82),300);
+}
+function conversationSpeak(){
+ const c=conversations[conversationIdx];recognize(c.reply,(ok)=>{$("#conversationFeedback").className=ok?"feedback":"feedback try";$("#conversationFeedback").innerHTML=ok?"🌷 <b>Tuyệt lắm, Bà Ngoại!</b>":"💜 <b>Không sao. Mình nghe rồi thử lại nhé!</b>"});
+}
+function renderHelp(){$("#helpList").innerHTML=helpPhrases.map((p,i)=>`<button class="list-item" data-help="${i}"><span class="icon">${p[0]}</span><span><b>${p[1]}</b><small>${p[2]}</small></span><span class="help-play">🔊</span></button>`).join("")}
+function renderQuiz(){
+ const lessons=dailyLessons(state.day),q=lessons[quizIdx],wrong=lessons[(quizIdx+3)%10],opts=Math.random()>.5?[q.vi,wrong.vi]:[wrong.vi,q.vi];
+ $("#quizOptions").innerHTML=opts.map(x=>`<button class="quiz-option">${x}</button>`).join("");$("#quizFeedback").className="feedback hidden";
+ $$(".quiz-option").forEach(b=>b.onclick=()=>{const ok=b.textContent===q.vi;$("#quizFeedback").className=ok?"feedback":"feedback try";$("#quizFeedback").textContent=ok?"Đúng rồi, Bà Ngoại! Tuyệt lắm 💜":"Gần đúng rồi. Bà Ngoại nghe lại nhé 🌷";if(ok)setTimeout(()=>{quizIdx=(quizIdx+1)%10;renderQuiz()},900)});
+}
+function renderGarden(){
+ const n=state.completed,world=[];
+ const flowerCount=Math.min(36,Math.floor(n/10));
+ for(let i=0;i<flowerCount;i++)world.push(["🌷","🪻","🌸","🌼","🌺"][i%5]);
+ if(n>=200)world.push("🐝");if(n>=400)world.push("🦋");if(n>=600)world.push("🌳");if(n>=800)world.push("🏡");if(n>=1000)world.push("🌈");
+ $("#gardenWorld").innerHTML=world.length?world.map(x=>`<span>${x}</span>`).join(""):"<span style='font-size:75px;opacity:.5'>🌱</span>";
+ $("#gardenTitle").textContent=n>=1000?"Khu vườn 1.000 câu đã nở rực rỡ!":`Ngoại đã hoàn thành ${n} / 1.000 câu`;
+ $("#gardenSubtitle").textContent=n>=1000?"MinMin và MoMo rất tự hào về Bà Ngoại! 💜":"Mỗi 10 câu sẽ nở thêm một cụm hoa.";
+ const ms=[[100,"🌷"],[200,"🐝"],[400,"🦋"],[600,"🌳"],[800,"🏡"],[1000,"🌈"]];
+ $("#milestones").innerHTML=ms.map(([v,ic])=>`<div class="milestone ${n>=v?"done":""}"><span>${ic}</span><small>${v} câu</small></div>`).join("");
+ $("#journalList").innerHTML=state.journal.length?state.journal.slice().reverse().map(j=>`<div class="journal-entry"><b>🌷 ${j.date}</b><small>${j.text}</small></div>`).join(""):"<div class='journal-entry'><small>Nhật ký đầu tiên sẽ xuất hiện sau khi Bà Ngoại hoàn thành một bài.</small></div>";
+}
+async function init(){
+ curriculum=await fetch("data/curriculum-1000.json").then(r=>r.json());
+ state.day=Math.min(100,Math.max(1,state.day));state.sentence=Math.min(9,Math.max(0,state.sentence));activeDay=state.day;idx=state.sentence;
+ renderHome();renderLesson();renderHelp();renderQuiz();renderGarden();renderFavorites();renderTopics();setupSW();
 }
 $$("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
 $("#gardenShortcut").onclick=()=>go("garden");
-$("#startToday").onclick=()=>{idx=0;progress=0;localStorage.setItem("ewgProgress",0);renderHome();renderLesson();go("lesson")};
-$("#slowBtn").onclick=()=>speak(lessons[idx].en,.58);
-$("#naturalBtn").onclick=()=>speak(lessons[idx].en,.9);
-$("#speakBtn").onclick=recognize;
-$("#nextBtn").onclick=()=>{
- progress=Math.min(10,idx+1);localStorage.setItem("ewgProgress",progress);renderHome();
- if(idx<lessons.length-1){showCelebration(pick(praise));idx++;renderLesson()}else finishLesson()
-};
-$("#quizPlay").onclick=()=>speak(lessons[quizIdx].en,.72);
-$("#celebrationClose").onclick=()=>{$("#celebration").classList.add("hidden");if(progress===10&&idx===9)go("garden")};
+$("#startToday").onclick=()=>{activeDay=state.day;idx=state.sentence;renderLesson();go("lesson")};
+$("#slowBtn").onclick=()=>speak(dailyLessons()[idx].en,.58);$("#naturalBtn").onclick=()=>speak(dailyLessons()[idx].en,.9);$("#speakBtn").onclick=startRecognition;$("#recordBtn").onclick=toggleRecord;$("#favoriteBtn").onclick=toggleFavorite;$("#nextBtn").onclick=nextLesson;
+$("#quizPlay").onclick=()=>speak(dailyLessons(state.day)[quizIdx].en,.72);
+$("#conversationListen").onclick=()=>speak(conversations[conversationIdx].reply,.78);$("#conversationSpeak").onclick=conversationSpeak;$("#conversationNext").onclick=()=>{conversationIdx=(conversationIdx+1)%conversations.length;renderConversation()};
+$("#celebrationClose").onclick=()=>$("#celebration").classList.add("hidden");
+$("#finalClose").onclick=()=>{$("#finalCelebration").classList.add("hidden");go("garden")};
 $("#installHelp").onclick=()=>alert("Trên iPhone: mở trang bằng Safari → bấm Chia sẻ → chọn “Thêm vào Màn hình chính”.");
+
 document.addEventListener("click",e=>{
- const t=e.target.closest("[data-topic]");if(t){idx=Math.min(Number(t.dataset.topic),lessons.length-1);renderLesson();go("lesson")}
- const h=e.target.closest("[data-help]");if(h)speak(helpPhrases[Number(h.dataset.help)][1],.7)
+ const h=e.target.closest("[data-help]");if(h)speak(helpPhrases[Number(h.dataset.help)][1],.7);
+ const d=e.target.closest("[data-day]");if(d){activeDay=Number(d.dataset.day);idx=activeDay===state.day?state.sentence:0;renderLesson();go("lesson")}
+ const p=e.target.closest("[data-fav-play]");if(p){const x=curriculum.find(y=>y.id===Number(p.dataset.favPlay));if(x)speak(x.en,.75)}
+ const r=e.target.closest("[data-fav-remove]");if(r){state.favorites=state.favorites.filter(x=>x!==Number(r.dataset.favRemove));save();renderFavorites();renderHome()}
 });
-setInterval(()=>{welIdx=(welIdx+1)%welcomeMessages.length;$("#welcomeEnglish").textContent=welcomeMessages[welIdx][0];$("#welcomeVietnamese").textContent=welcomeMessages[welIdx][1]},5000);
-renderHome();renderLesson();renderTopics();renderHelp();renderQuiz();renderGarden();
-if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
+
+function setupSW(){
+ if(!("serviceWorker"in navigator))return;
+ navigator.serviceWorker.register("service-worker.js").then(reg=>{
+   if(reg.waiting){waitingWorker=reg.waiting;$("#updateBanner").classList.remove("hidden")}
+   reg.addEventListener("updatefound",()=>{const nw=reg.installing;nw.addEventListener("statechange",()=>{if(nw.state==="installed"&&navigator.serviceWorker.controller){waitingWorker=nw;$("#updateBanner").classList.remove("hidden")}})});
+ });
+ navigator.serviceWorker.addEventListener("controllerchange",()=>location.reload());
+ $("#updateNow").onclick=()=>waitingWorker?.postMessage({type:"SKIP_WAITING"});
+}
+init();

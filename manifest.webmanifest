@@ -1,7 +1,7 @@
 {
   "name": "English with Grandma",
-  "short_name": "English Grandma",
-  "description": "1.000 câu tiếng Anh thực tế cho hành trình của Ngoại.",
+  "short_name": "Grandma English",
+  "description": "1.000 câu tiếng Anh cùng MinMin và MoMo, có hội thoại, câu yêu thích và khu vườn tiến độ.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
