@@ -409,24 +409,47 @@ function recognize(target,callback,onStatus=()=>{}){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!SR){callback(false,"","unsupported",0);return}
 
- // V10: Give Grandma enough time to speak slowly.
- // Safari may end one recognition session after a short pause, so the app
- // quietly starts another session and only scores after a longer silence.
- const SILENCE_GRACE_MS=3000;
- const MAX_LISTENING_MS=15000;
- const RESTART_DELAY_MS=120;
+ // V10.1: Safari/iPhone can end a recognition session after a very short pause.
+ // We reconnect quietly, join partial transcripts, and only score once Grandma
+ // has had enough time to finish the whole sentence.
+ const SILENCE_GRACE_MS=3200;
+ const COMPLETE_SILENCE_MS=1100;
+ const MIN_INCOMPLETE_LISTEN_MS=8500;
+ const MAX_LISTENING_MS=18000;
+ const RESTART_DELAY_MS=180;
+ const MAX_RESTARTS=8;
 
  let recognition=null;
  let finished=false;
  let startedOnce=false;
+ let heardAnything=false;
+ let firstSpeechAt=0;
+ let lastSpeechAt=Date.now();
+ let combinedTranscript="";
  let bestTranscript="";
  let bestScore=0;
- let heardAnything=false;
- let lastSpeechAt=Date.now();
+ let restartCount=0;
  let silenceTimer=null;
  let restartTimer=null;
 
+ const targetWordCount=spokenWords(target).length;
  const hardTimer=setTimeout(()=>finish("timeout"),MAX_LISTENING_MS);
+
+ function mergeTranscript(base,fragment){
+   const a=normalizeSpeech(base).split(" ").filter(Boolean);
+   const b=normalizeSpeech(fragment).split(" ").filter(Boolean);
+   if(!a.length)return fragment.trim();
+   if(!b.length)return base.trim();
+   const aText=a.join(" "),bText=b.join(" ");
+   if(aText.includes(bText))return base.trim();
+   if(bText.includes(aText))return fragment.trim();
+   let overlap=0;
+   const max=Math.min(a.length,b.length);
+   for(let n=max;n>0;n--){
+     if(a.slice(-n).join(" ")===b.slice(0,n).join(" ")){overlap=n;break}
+   }
+   return [...a,...b.slice(overlap)].join(" ").trim();
+ }
 
  function clearTimers(){
    clearTimeout(hardTimer);
@@ -438,18 +461,32 @@ function recognize(target,callback,onStatus=()=>{}){
    if(finished)return;
    finished=true;
    clearTimers();
-   try{recognition?.stop()}catch(_){}
-   callback(bestScore>=.62,bestTranscript,reason,bestScore);
+   try{recognition?.abort()}catch(_){try{recognition?.stop()}catch(__){}}
+   callback(bestScore>=.62,bestTranscript||combinedTranscript,reason,bestScore);
+ }
+
+ function currentIsComplete(){
+   const heardCount=spokenWords(bestTranscript||combinedTranscript).length;
+   return bestScore>=.88 || (targetWordCount>0&&heardCount>=targetWordCount&&bestScore>=.72);
  }
 
  function scheduleSilenceCheck(){
    clearTimeout(silenceTimer);
    if(!heardAnything)return;
-   const remaining=Math.max(0,SILENCE_GRACE_MS-(Date.now()-lastSpeechAt));
+   const complete=currentIsComplete();
+   const requiredSilence=complete?COMPLETE_SILENCE_MS:SILENCE_GRACE_MS;
+   const elapsedSinceFirst=Date.now()-firstSpeechAt;
+   const waitForMinimum=!complete&&elapsedSinceFirst<MIN_INCOMPLETE_LISTEN_MS;
+   const remainingSilence=Math.max(0,requiredSilence-(Date.now()-lastSpeechAt));
+   const remainingMinimum=waitForMinimum?MIN_INCOMPLETE_LISTEN_MS-elapsedSinceFirst:0;
    silenceTimer=setTimeout(()=>{
-     if(Date.now()-lastSpeechAt>=SILENCE_GRACE_MS)finish("silence");
-     else scheduleSilenceCheck();
-   },remaining);
+     if(finished)return;
+     const now=Date.now();
+     const completeNow=currentIsComplete();
+     if(completeNow&&now-lastSpeechAt>=COMPLETE_SILENCE_MS){finish("complete");return}
+     if(!completeNow&&now-firstSpeechAt>=MIN_INCOMPLETE_LISTEN_MS&&now-lastSpeechAt>=SILENCE_GRACE_MS){finish("silence");return}
+     scheduleSilenceCheck();
+   },Math.max(80,remainingSilence,remainingMinimum));
  }
 
  function startSession(){
@@ -460,13 +497,17 @@ function recognize(target,callback,onStatus=()=>{}){
    recognition.interimResults=true;
    recognition.maxAlternatives=1;
 
+   let sessionTranscript="";
+
    recognition.onstart=()=>{
-     onStatus(startedOnce?"listening-again":"listening");
+     onStatus(startedOnce?"listening-again":"listening",bestTranscript||combinedTranscript,bestScore);
      startedOnce=true;
    };
    recognition.onspeechstart=()=>{
-     lastSpeechAt=Date.now();
-     onStatus("hearing");
+     const now=Date.now();
+     if(!firstSpeechAt)firstSpeechAt=now;
+     lastSpeechAt=now;
+     onStatus("hearing",bestTranscript||combinedTranscript,bestScore);
    };
    recognition.onresult=e=>{
      let finalText="",interimText="";
@@ -478,10 +519,17 @@ function recognize(target,callback,onStatus=()=>{}){
      if(!candidate)return;
 
      heardAnything=true;
-     lastSpeechAt=Date.now();
-     const score=speechMatchScore(target,candidate);
-     if(score>=bestScore){bestScore=score;bestTranscript=candidate}
-     onStatus("processing",candidate,score);
+     const now=Date.now();
+     if(!firstSpeechAt)firstSpeechAt=now;
+     lastSpeechAt=now;
+     sessionTranscript=candidate;
+     const merged=mergeTranscript(combinedTranscript,sessionTranscript);
+     const score=speechMatchScore(target,merged);
+     if(score>=bestScore || spokenWords(merged).length>spokenWords(bestTranscript).length){
+       bestScore=Math.max(bestScore,score);
+       bestTranscript=merged;
+     }
+     onStatus("processing",bestTranscript||merged,bestScore);
      scheduleSilenceCheck();
    };
    recognition.onspeechend=()=>{
@@ -491,23 +539,36 @@ function recognize(target,callback,onStatus=()=>{}){
    recognition.onnomatch=()=>{};
    recognition.onerror=e=>{
      if(finished||e.error==="aborted")return;
-     if(["not-allowed","service-not-allowed","audio-capture"].includes(e.error)){
-       finish(e.error);
-     }
+     if(["not-allowed","service-not-allowed","audio-capture"].includes(e.error))finish(e.error);
    };
    recognition.onend=()=>{
      if(finished)return;
-     if(heardAnything&&Date.now()-lastSpeechAt>=SILENCE_GRACE_MS){
-       finish("silence");
+     if(sessionTranscript)combinedTranscript=mergeTranscript(combinedTranscript,sessionTranscript);
+     const combinedScore=speechMatchScore(target,combinedTranscript);
+     if(combinedScore>=bestScore){bestScore=combinedScore;bestTranscript=combinedTranscript}
+     scheduleSilenceCheck();
+
+     if(currentIsComplete()){
+       // Keep a brief natural pause so the last word is not clipped.
+       restartTimer=setTimeout(()=>{
+         if(!finished&&Date.now()-lastSpeechAt>=COMPLETE_SILENCE_MS)finish("complete");
+         else if(!finished)startSession();
+       },COMPLETE_SILENCE_MS);
        return;
      }
+
+     if(restartCount>=MAX_RESTARTS){
+       if(Date.now()-firstSpeechAt>=MIN_INCOMPLETE_LISTEN_MS)finish("restart-limit");
+       else restartTimer=setTimeout(startSession,RESTART_DELAY_MS);
+       return;
+     }
+     restartCount++;
+     onStatus("listening-again",bestTranscript||combinedTranscript,bestScore);
      restartTimer=setTimeout(startSession,RESTART_DELAY_MS);
    };
 
    try{recognition.start()}
-   catch(e){
-     restartTimer=setTimeout(startSession,RESTART_DELAY_MS+180);
-   }
+   catch(e){restartTimer=setTimeout(startSession,RESTART_DELAY_MS+220)}
  }
 
  startSession();
@@ -530,6 +591,7 @@ function startRecognition(){
    }
  },(status,heard)=>{
    if(status==="listening")$("#speakStatus").textContent="Ngoại nói ngay nhé...";
+   if(status==="listening-again")$("#speakStatus").textContent="Ngoại nói tiếp nhé, app vẫn đang nghe...";
    if(status==="hearing")$("#speakStatus").textContent="Đang nghe Bà Ngoại...";
    if(status==="processing"&&heard)$("#speakStatus").textContent=`Đã nghe: “${heard}”`;
  });
